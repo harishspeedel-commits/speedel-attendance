@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SPEEDEL EXPRESS - Attendance System</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS for Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- jsPDF for PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .logo-img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-text .main {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text .sub {
+            font-size: 10px;
+            color: #666;
+            letter-spacing: 1px;
+        }
+
+        .logo-text .express {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a73e8;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn i {
+            font-size: 18px;
+        }
+
+        .nav-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header i {
+            color: #667eea;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: white;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .webcam-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .webcam-box {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        video, #photoPreview {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .logo-preview {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px 20px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: #e0e0e0;
+            border-color: #667eea;
+        }
+
+        .gps-link {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .gps-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .nav-links {
+                justify-content: center;
+            }
+
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWXXso720Qo8Q5A-nHge6DtoamYzLn97Q",
+            authDomain: "speedel-attendance.firebaseapp.com",
+            projectId: "speedel-attendance",
+            storageBucket: "speedel-attendance.firebasestorage.app",
+            messagingSenderId: "693149953722",
+            appId: "1:693149953722:web:1bc91ae862fd46778bdc83"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let currentUser = null;
+        let currentUserRole = null;
+        let currentUserCompany = null;
+        let currentUserData = null;
+        let currentPhoto = null;
+        let stream = null;
+        let currentLocation = null;
+        let currentLogoUrl = null;
+
+        const SUPER_ADMIN_EMAIL = "Harishspeedel@gmail.com";
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            if (!alertContainer) return;
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle')}"></i> ${message}`;
+            alertContainer.appendChild(alert);
+            setTimeout(() => alert.remove(), 4000);
+        }
+
+        // Logo Management
+        async function loadLogo() {
+            try {
+                const logoDoc = await db.collection('settings').doc('companyLogo').get();
+                if (logoDoc.exists && logoDoc.data().logoUrl) {
+                    currentLogoUrl = logoDoc.data().logoUrl;
+                } else {
+                    currentLogoUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23667eea'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E";
+                }
+                updateAllLogos();
+            } catch (error) {
+                console.error('Error loading logo:', error);
+            }
+        }
+
+        function updateAllLogos() {
+            const logoImgs = document.querySelectorAll('.logo-img');
+            logoImgs.forEach(img => {
+                if (img) img.src = currentLogoUrl;
+            });
+        }
+
+        async function uploadLogo(file) {
+            if (!file) return;
+            if (!file.type.match('image.*')) {
+                showAlert('Please select an image file (PNG, JPG, JPEG)', 'error');
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('File size should be less than 2MB', 'error');
+                return;
+            }
+            
+            try {
+                showAlert('Uploading logo...', 'info');
+                const storageRef = storage.ref().child(`company_logo/logo_${Date.now()}`);
+                await storageRef.put(file);
+                const downloadUrl = await storageRef.getDownloadURL();
+                await db.collection('settings').doc('companyLogo').set({
+                    logoUrl: downloadUrl,
+                    updatedAt: new Date(),
+                    updatedBy: currentUser.email
+                });
+                currentLogoUrl = downloadUrl;
+                updateAllLogos();
+                showAlert('Logo updated successfully!', 'success');
+                const logoPreview = document.getElementById('logoPreview');
+                if (logoPreview) logoPreview.src = downloadUrl;
+            } catch (error) {
+                showAlert('Error uploading logo: ' + error.message, 'error');
+            }
+        }
+
+        async function ensureSuperAdminInFirestore(user) {
+            if (user.email !== SUPER_ADMIN_EMAIL) return false;
+            const snapshot = await db.collection('users').where('uid', '==', user.uid).get();
+            if (snapshot.empty) {
+                await db.collection('users').add({
+                    uid: user.uid,
+                    name: "Super Admin",
+                    email: SUPER_ADMIN_EMAIL,
+                    role: "admin",
+                    companyId: "",
+                    createdAt: new Date()
+                });
+            }
+            return true;
+        }
+
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const targetPage = document.getElementById(`page-${page}`);
+            if (targetPage) targetPage.classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.page === page) btn.classList.add('active');
+            });
+        }
+
+        // ============ RENDER LOGIN PAGE ============
+        function renderLogin() {
+            document.getElementById('app').innerHTML = `
+                <div class="main-container" style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                    <div class="card" style="max-width: 450px; width: 100%;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <div class="logo-container" style="justify-content: center; margin-bottom: 20px;">
+                                <img id="loginLogo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23667eea'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E" class="logo-img" alt="Logo">
+                                <div class="logo-text">
+                                    <span class="main">SPEEDEL</span>
+                                    <span class="sub">Delivery Redefined</span>
+                                    <span class="express">EXPRESS</span>
+                                </div>
+                            </div>
+                            <h2 style="color: #333;">Welcome Back</h2>
+                            <p style="color: #666; font-size: 14px;">Login to your account</p>
+                        </div>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label><i class="fas fa-envelope"></i> Email Address</label>
+                                <input type="email" id="email" placeholder="Enter your email" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> Password</label>
+                                <input type="password" id="password" placeholder="Enter your password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                        </form>
+                        <div id="alertContainer" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            `;
+            loadLogo();
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    showAlert('Login successful! Redirecting...', 'success');
+                } catch (error) {
+                    showAlert('Login failed: ' + error.message, 'error');
+                }
+            });
+        }
+
+        // ============ RENDER MAIN LAYOUT ============
+        function renderMainLayout() {
+            document.getElementById('app').innerHTML = `
+                <div class="navbar">
+                    <div class="logo-container" onclick="navigateTo('dashboard')">
+                        <img id="navLogo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23667eea'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E" class="logo-img" alt="Logo">
+                        <div class="logo-text">
+                            <span class="main">SPEEDEL</span>
+                            <span class="sub">Delivery Redefined</span>
+                            <span class="express">EXPRESS</span>
+                        </div>
+                    </div>
+                    <div class="nav-links">
+                        <button class="nav-btn" data-page="dashboard" onclick="navigateTo('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+                        ${currentUserRole === 'admin' ? `
+                            <button class="nav-btn" data-page="companies" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</button>
+                            <button class="nav-btn" data-page="users" onclick="navigateTo('users')"><i class="fas fa-users"></i> Users</button>
+                            <button class="nav-btn" data-page="settings" onclick="navigateTo('settings')"><i class="fas fa-cog"></i> Settings</button>
+                        ` : ''}
+                        <button class="nav-btn" data-page="attendance" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</button>
+                        <button class="nav-btn" data-page="reports" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</button>
+                        <button class="nav-btn logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                </div>
+                <div class="main-container">
+                    <div id="alertContainer"></div>
+                    <div id="page-dashboard" class="page active"></div>
+                    <div id="page-companies" class="page"></div>
+                    <div id="page-users" class="page"></div>
+                    <div id="page-settings" class="page"></div>
+                    <div id="page-attendance" class="page"></div>
+                    <div id="page-reports" class="page"></div>
+                </div>
+            `;
+            loadLogo();
+            loadDashboardPage();
+            if (currentUserRole === 'admin') {
+                loadCompaniesPage();
+                loadUsersPage();
+                loadSettingsPage();
+            }
+            loadAttendancePage();
+            loadReportsPage();
+        }
+
+        // ============ DASHBOARD PAGE ============
+        async function loadDashboardPage() {
+            const container = document.getElementById('page-dashboard');
+            let totalEmployees = 0, presentToday = 0, totalTrips = 0;
+            try {
+                if (currentUserRole === 'admin') {
+                    const usersSnap = await db.collection('users').get();
+                    totalEmployees = usersSnap.size;
+                    const today = new Date().toISOString().split('T')[0];
+                    const attendanceSnap = await db.collection('attendance').where('date', '==', today).get();
+                    presentToday = attendanceSnap.size;
+                    const tripsSnap = await db.collection('attendance').where('type', '==', 'trip').get();
+                    totalTrips = tripsSnap.size;
+                } else {
+                    const usersSnap = await db.collection('users').where('companyId', '==', currentUserCompany).get();
+                    totalEmployees = usersSnap.size;
+                    const today = new Date().toISOString().split('T')[0];
+                    const attendanceSnap = await db.collection('attendance').where('companyId', '==', currentUserCompany).where('date', '==', today).get();
+                    presentToday = attendanceSnap.size;
+                }
+            } catch (e) {}
+            
+            container.innerHTML = `
+                <div class="grid-4">
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-number">${totalEmployees}</div><div class="stat-label">Total Employees</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-calendar-check"></i></div><div class="stat-number">${presentToday}</div><div class="stat-label">Present Today</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-truck"></i></div><div class="stat-number">${totalTrips}</div><div class="stat-label">Total Trips</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-number">${new Date().toLocaleTimeString()}</div><div class="stat-label">Current Time</div></div>
+                </div>
+                <div class="card"><div class="card-header"><i class="fas fa-chart-line"></i> Attendance Overview</div><canvas id="attendanceChart" height="100"></canvas></div>
+            `;
+            
+            const ctx = document.getElementById('attendanceChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], datasets: [{ label: 'Present Employees', data: [65, 72, 68, 80, 75, 55], borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4, fill: true }] },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                });
+            }
+        }
+
+        // ============ COMPANIES PAGE ============
+        async function loadCompaniesPage() {
+            const container = document.getElementById('page-companies');
+            container.innerHTML = `
+                <div class="card"><div class="card-header"><i class="fas fa-plus-circle"></i> Create New Company</div>
+                <div class="grid-2">
+                    <div class="form-group"><input type="text" id="companyName" placeholder="Company Name"></div>
+                    <div class="form-group"><input type="text" id="companyAddress" placeholder="Address"></div>
+                    <div class="form-group"><input type="text" id="companyPhone" placeholder="Phone"></div>
+                    <div class="form-group"><button class="btn btn-primary" onclick="createCompany()"><i class="fas fa-save"></i> Create Company</button></div>
+                </div></div>
+                <div class="card"><div class="card-header"><i class="fas fa-building"></i> All Companies</div><div id="companiesList" class="table-container"></div></div>
+            `;
+            await refreshCompaniesList();
+        }
+
+        async function refreshCompaniesList() {
+            const snapshot = await db.collection('companies').get();
+            const companies = [];
+            snapshot.forEach(doc => companies.push({ id: doc.id, ...doc.data() }));
+            document.getElementById('companiesList').innerHTML = `<table><thead><tr><th>Company Name</th><th>Address</th><th>Phone</th><th>Actions</th></tr></thead><tbody>${companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.address || '-'}</td><td>${c.phone || '-'}</td><td><button class="btn btn-warning" style="padding:5px 10px;" onclick="editCompany('${c.id}','${c.name}','${c.address || ''}','${c.phone || ''}')"><i class="fas fa-edit"></i></button> <button class="btn btn-danger" style="padding:5px 10px;" onclick="deleteCompany('${c.id}','${c.name}')"><i class="fas fa-trash"></i></button></td></tr>`).join('')}</tbody></table>`;
+        }
+
+        // ============ USERS PAGE ============
+        async function loadUsersPage() {
+            const container = document.getElementById('page-users');
+            container.innerHTML = `
+                <div class="card"><div class="card-header"><i class="fas fa-user-plus"></i> Create New User</div>
+                <div class="grid-2">
+                    <div class="form-group"><input type="text" id="userName" placeholder="Full Name"></div>
+                    <div class="form-group"><input type="email" id="userEmail" placeholder="Email"></div>
+                    <div class="form-group"><input type="password" id="userPassword" placeholder="Password"></div>
+                    <div class="form-group"><select id="userRole"><option value="company_manager">Company Manager</option><option value="office_staff">Office Staff</option><option value="driver">Driver</option></select></div>
+                    <div class="form-group" id="driverTypeDiv" style="display:none;"><select id="driverType"><option value="daily">Daily Driver</option><option value="trip">Trip Driver</option></select></div>
+                    <div class="form-group"><select id="userCompany"></select></div>
+                    <div class="form-group"><button class="btn btn-primary" onclick="createUser()"><i class="fas fa-save"></i> Create User</button></div>
+                </div></div>
+                <div class="card"><div class="card-header"><i class="fas fa-users"></i> All Users</div><div id="usersList" class="table-container"></div></div>
+            `;
+            await refreshCompaniesSelect();
+            await refreshUsersList();
+            document.getElementById('userRole').onchange = (e) => {
+                document.getElementById('driverTypeDiv').style.display = e.target.value === 'driver' ? 'block' : 'none';
+            };
+        }
+
+        async function refreshCompaniesSelect() {
+            const snapshot = await db.collection('companies').get();
+            const companies = [];
+            snapshot.forEach(doc => companies.push({ id: doc.id, name: doc.data().name }));
+            document.getElementById('userCompany').innerHTML = companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        async function refreshUsersList() {
+            const snapshot = await db.collection('users').get();
+            const users = [];
+            snapshot.forEach(doc => users.push(doc.data()));
+            const companies = await db.collection('companies').get();
+            const companyMap = {};
+            companies.forEach(doc => companyMap[doc.id] = doc.data().name);
+            document.getElementById('usersList').innerHTML = `<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Company</th><th>Actions</th></tr></thead><tbody>${users.map(u => `<tr><td><strong>${u.name}</strong></td><td>${u.email}</td><td>${u.role} ${u.driverType ? `(${u.driverType})` : ''}</td><td>${companyMap[u.companyId] || '-'}</td><td><button class="btn btn-warning" style="padding:5px 10px;" onclick="editUser('${u.uid}','${u.name}')"><i class="fas fa-edit"></i></button> <button class="btn btn-danger" style="padding:5px 10px;" onclick="resetUserPassword('${u.uid}','${u.email}')"><i class="fas fa-key"></i></button></td></tr>`).join('')}</tbody></table>`;
+        }
+
+        // ============ SETTINGS PAGE ============
+        async function loadSettingsPage() {
+            const container = document.getElementById('page-settings');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-image"></i> Company Logo Settings</div>
+                    <div class="logo-preview"><h3 style="margin-bottom: 15px;">Current Logo Preview</h3><img id="logoPreview" src="${currentLogoUrl}" alt="Company Logo" style="max-width: 150px; max-height: 150px; border-radius: 15px;"></div>
+                    <div class="form-group">
+                        <label><i class="fas fa-upload"></i> Upload New Logo</label>
+                        <div class="file-input-wrapper">
+                            <div class="file-input-label" onclick="document.getElementById('logoFileInput').click()"><i class="fas fa-cloud-upload-alt"></i> Click to select image (PNG, JPG, JPEG)</div>
+                            <input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(this)">
+                        </div>
+                        <small style="color: #666; display: block; margin-top: 5px;">Recommended size: 200x200px, Max 2MB</small>
+                    </div>
+                    <div class="form-group"><button class="btn btn-danger" onclick="resetDefaultLogo()"><i class="fas fa-undo"></i> Reset to Default Logo</button></div>
+                </div>
+                <div class="card"><div class="card-header"><i class="fas fa-lock"></i> Security Settings</div><div class="form-group"><button class="btn btn-warning" onclick="changeSuperAdminPassword()"><i class="fas fa-key"></i> Change Super Admin Password</button></div></div>
+            `;
+            const preview = document.getElementById('logoPreview');
+            if (preview && currentLogoUrl) preview.src = currentLogoUrl;
+        }
+
+        window.handleLogoUpload = async function(input) {
+            const file = input.files[0];
+            if (file) await uploadLogo(file);
+        };
+
+        window.resetDefaultLogo = async function() {
+            if (confirm('Reset to default logo?')) {
+                await db.collection('settings').doc('companyLogo').delete();
+                currentLogoUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23667eea'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E";
+                updateAllLogos();
+                const preview = document.getElementById('logoPreview');
+                if (preview) preview.src = currentLogoUrl;
+                showAlert('Logo reset to default!', 'success');
+            }
+        };
+
+        // ============ ATTENDANCE PAGE ============
+        async function loadAttendancePage() {
+            const container = document.getElementById('page-attendance');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-camera"></i> Mark Attendance</div>
+                    <div id="attendanceStatus" class="alert alert-info"></div>
+                    <div class="webcam-section">
+                        <div class="webcam-box"><video id="webcam" autoplay playsinline style="width:100%;max-width:400px;margin:0 auto;"></video><canvas id="canvas" style="display:none;"></canvas><div id="photoPreviewDiv" style="display:none;"><img id="photoPreview" style="width:100%;max-width:400px;"><p style="margin-top:10px;">✅ Selfie captured!</p></div></div>
+                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="startCamera()"><i class="fas fa-video"></i> Start Camera</button>
+                            <button class="btn btn-success" onclick="capturePhoto()"><i class="fas fa-camera"></i> Take Selfie</button>
+                            <button class="btn btn-warning" onclick="retakePhoto()"><i class="fas fa-redo"></i> Retake</button>
+                            <button class="btn btn-outline" onclick="getLocationManually()"><i class="fas fa-map-marker-alt"></i> Get Location</button>
+                        </div>
+                        <div id="locationMsg" class="alert alert-warning" style="margin-top:15px;">📍 Click "Get Location" to capture GPS</div>
+                    </div>
+                    <div id="attendanceActions" class="grid-2" style="margin-top:20px;"></div>
+                </div>
+                <div class="card"><div class="card-header"><i class="fas fa-history"></i> My History</div><div id="historyList" class="table-container"></div></div>
+            `;
+            startCamera();
+            await loadAttendanceStatus();
+            await loadHistory();
+        }
+
+        async function loadAttendanceStatus() {
+            const today = new Date().toISOString().split('T')[0];
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
+            let hasActive = false, activeSession = null;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if ((data.checkIn && !data.checkOut) || (data.tripStart && !data.tripEnd)) { hasActive = true; activeSession = data; }
+            });
+            const actionsDiv = document.getElementById('attendanceActions');
+            const statusDiv = document.getElementById('attendanceStatus');
+            if (currentUserRole === 'driver') {
+                const driverType = currentUserData?.driverType || 'trip';
+                if (driverType === 'trip') {
+                    if (hasActive) { actionsDiv.innerHTML = `<button class="btn btn-danger" onclick="prepareTripEnd()"><i class="fas fa-stop"></i> END TRIP</button>`; statusDiv.innerHTML = `🚛 Trip in progress`; }
+                    else { actionsDiv.innerHTML = `<button class="btn btn-success" onclick="prepareTripStart()"><i class="fas fa-play"></i> START NEW TRIP</button>`; statusDiv.innerHTML = `📌 No active trip. Take selfie, get location, then start trip.`; }
+                } else {
+                    if (hasActive) { actionsDiv.innerHTML = `<button class="btn btn-danger" onclick="prepareDailyCheckOut()"><i class="fas fa-sign-out-alt"></i> CHECK OUT</button>`; statusDiv.innerHTML = `✅ Checked in. Click CHECK OUT when leaving.`; }
+                    else { actionsDiv.innerHTML = `<button class="btn btn-success" onclick="prepareDailyCheckIn()"><i class="fas fa-sign-in-alt"></i> CHECK IN</button>`; statusDiv.innerHTML = `📌 Not checked in. Take selfie, get location, then check in.`; }
+                }
+            } else if (currentUserRole === 'company_manager') {
+                if (hasActive) { actionsDiv.innerHTML = `<button class="btn btn-danger" onclick="prepareManagerCheckOut()"><i class="fas fa-sign-out-alt"></i> CHECK OUT</button>`; statusDiv.innerHTML = `✅ Checked in at ${activeSession?.checkIn ? new Date(activeSession.checkIn).toLocaleTimeString() : 'today'}`; }
+                else { actionsDiv.innerHTML = `<button class="btn btn-success" onclick="prepareManagerCheckIn()"><i class="fas fa-sign-in-alt"></i> CHECK IN</button>`; statusDiv.innerHTML = `📌 Not checked in. Take selfie, get location, then check in.`; }
+            }
+        }
+
+        window.startCamera = async function() {
+            try {
+                if (stream) stream.getTracks().forEach(track => track.stop());
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('webcam');
+                if (video) video.srcObject = stream;
+            } catch (error) { showAlert('Camera error: ' + error.message, 'error'); }
+        };
+
+        window.capturePhoto = function() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('canvas');
+            if (!video || !canvas) return;
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            currentPhoto = canvas.toDataURL('image/jpeg');
+            document.getElementById('photoPreviewDiv').style.display = 'block';
+            document.getElementById('photoPreview').src = currentPhoto;
+            if (stream) { stream.getTracks().forEach(track => track.stop()); document.getElementById('webcam').style.display = 'none'; }
+            showAlert('✅ Selfie captured! Now get location.', 'success');
+        };
+
+        window.retakePhoto = function() {
+            currentPhoto = null;
+            document.getElementById('photoPreviewDiv').style.display = 'none';
+            document.getElementById('webcam').style.display = 'block';
+            startCamera();
+        };
+
+        window.getLocationManually = async function() {
+            try {
+                const position = await new Promise((resolve, reject) => { navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 }); });
+                currentLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                document.getElementById('locationMsg').innerHTML = `📍 Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} ✅`;
+                document.getElementById('locationMsg').className = 'alert alert-success';
+                showAlert('Location captured!', 'success');
+            } catch (error) { document.getElementById('locationMsg').innerHTML = `⚠️ Location error: ${error.message}`; document.getElementById('locationMsg').className = 'alert alert-error'; }
+        };
+
+        window.prepareTripStart = async function() {
+            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+            if (!currentLocation) { showAlert('Get location first!', 'error'); return; }
+            const today = new Date().toISOString().split('T')[0];
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).where('type', '==', 'trip').get();
+            const tripNumber = snapshot.size + 1;
+            await db.collection('attendance').add({ userId: currentUser.uid, userName: currentUserData.name, companyId: currentUserCompany, date: today, tripStart: new Date().toISOString(), startLocation: currentLocation, startPhoto: currentPhoto, tripNumber: tripNumber, status: 'trip_start', type: 'trip' });
+            showAlert(`✅ Trip #${tripNumber} started!`, 'success');
+            resetAfterAttendance();
+            await loadAttendanceStatus();
+            await loadHistory();
+        };
+
+        window.prepareTripEnd = async function() {
+            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+            if (!currentLocation) { showAlert('Get location first!', 'error'); return; }
+            const today = new Date().toISOString().split('T')[0];
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).where('tripEnd', '==', null).get();
+            if (snapshot.empty) { showAlert('No active trip!', 'error'); return; }
+            let docId = null;
+            snapshot.forEach(doc => { docId = doc.id; });
+            await db.collection('attendance').doc(docId).update({ tripEnd: new Date().toISOString(), endLocation: currentLocation, endPhoto: currentPhoto, status: 'completed' });
+            showAlert('✅ Trip ended!', 'success');
+            resetAfterAttendance();
+            await loadAttendanceStatus();
+            await loadHistory();
+        };
+
+        window.prepareDailyCheckIn = async function() {
+            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+            if (!currentLocation) { showAlert('Get location first!', 'error'); return; }
+            await db.collection('attendance').add({ userId: currentUser.uid, userName: currentUserData.name, companyId: currentUserCompany, date: new Date().toISOString().split('T')[0], checkIn: new Date().toISOString(), checkInLocation: currentLocation, checkInPhoto: currentPhoto, status: 'checked_in', type: 'daily' });
+            showAlert('✅ Check in successful!', 'success');
+            resetAfterAttendance();
+            await loadAttendanceStatus();
+            await loadHistory();
+        };
+
+        window.prepareDailyCheckOut = async function() {
+            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+            if (!currentLocation) { showAlert('Get location first!', 'error'); return; }
+            const today = new Date().toISOString().split('T')[0];
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).where('checkOut', '==', null).get();
+            if (snapshot.empty) { showAlert('No active session!', 'error'); return; }
+            let docId = null;
+            snapshot.forEach(doc => { docId = doc.id; });
+            await db.collection('attendance').doc(docId).update({ checkOut: new Date().toISOString(), checkOutLocation: currentLocation, checkOutPhoto: currentPhoto, status: 'completed' });
+            showAlert('✅ Check out successful!', 'success');
+            resetAfterAttendance();
+            await loadAttendanceStatus();
+            await loadHistory();
+        };
+
+        window.prepareManagerCheckIn = async function() {
+            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+            if (!currentLocation) { showAlert('Get location first!', 'error'); return; }
+            await db.collection('attendance').add({ userId: currentUser.uid, userName: currentUserData.name, companyId: currentUserCompany, date: new Date().toISOString().split('T')[0], checkIn: new Date().toISOString(), checkInLocation: currentLocation, checkInPhoto: currentPhoto, status: 'checked_in', type: 'manager' });
+            showAlert('✅ Check in successful!', 'success');
+            resetAfterAttendance();
+            await loadAttendanceStatus();
+            await loadHistory();
+        };
+
+        window.prepareManagerCheckOut = async function() {
+            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+            if (!currentLocation) { showAlert('Get location first!', 'error'); return; }
+            const today = new Date().toISOString().split('T')[0];
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).where('checkOut', '==', null).get();
+            if (snapshot.empty) { showAlert('No active session!', 'error'); return; }
+            let docId = null;
+            snapshot.forEach(doc => { docId = doc.id; });
+            await db.collection('attendance').doc(docId).update({ checkOut: new Date().toISOString(), checkOutLocation: currentLocation, checkOutPhoto: currentPhoto, status: 'completed' });
+            showAlert('✅ Check out successful!', 'success');
+            resetAfterAttendance();
+            await loadAttendanceStatus();
+            await loadHistory();
+        };
+
+        function resetAfterAttendance() {
+            currentPhoto = null;
+            document.getElementById('photoPreviewDiv').style.display = 'none';
+            document.getElementById('webcam').style.display = 'block';
+            startCamera();
+        }
+
+        async function loadHistory() {
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).orderBy('date', 'desc').limit(20).get();
+            const history = [];
+            snapshot.forEach(doc => history.push(doc.data()));
+            document.getElementById('historyList').innerHTML = `<table><thead><tr><th>Date</th><th>Type</th><th>Start Time</th><th>End Time</th><th>Start Location</th><th>End Location</th><th>Photo</th></tr></thead><tbody>${history.map(h => { let startLoc = '-', endLoc = '-'; if (h.checkInLocation) startLoc = `${h.checkInLocation.lat?.toFixed(4)}, ${h.checkInLocation.lng?.toFixed(4)}`; else if (h.startLocation) startLoc = `${h.startLocation.lat?.toFixed(4)}, ${h.startLocation.lng?.toFixed(4)}`; if (h.checkOutLocation) endLoc = `${h.checkOutLocation.lat?.toFixed(4)}, ${h.checkOutLocation.lng?.toFixed(4)}`; else if (h.endLocation) endLoc = `${h.endLocation.lat?.toFixed(4)}, ${h.endLocation.lng?.toFixed(4)}`; return `<tr><td>${h.date}</td><td>${h.type === 'trip' ? '🚛 Trip' : (h.type === 'daily' ? 'Daily' : 'Office')} ${h.tripNumber ? `#${h.tripNumber}` : ''}</td><td>${h.checkIn ? new Date(h.checkIn).toLocaleTimeString() : (h.tripStart ? new Date(h.tripStart).toLocaleTimeString() : '-')}</td><td>${h.checkOut ? new Date(h.checkOut).toLocaleTimeString() : (h.tripEnd ? new Date(h.tripEnd).toLocaleTimeString() : '-')}</td><td>${startLoc}</td><td>${endLoc}</td><td><img src="${h.checkInPhoto || h.startPhoto}" width="40" height="40" style="border-radius:50%;cursor:pointer" onclick="window.open(this.src)"></td></tr>`}).join('')}</tbody></table>`;
+        }
+
+        // ============ REPORTS PAGE WITH FIXED GPS ============
+        async function loadReportsPage() {
+            const container = document.getElementById('page-reports');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-chart-bar"></i> Generate Reports</div>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Start Date</label><input type="date" id="reportStartDate"></div>
+                        <div class="form-group"><label>End Date</label><input type="date" id="reportEndDate"></div>
+                        <div class="form-group"><label>Employee Name</label><input type="text" id="reportEmployeeName" placeholder="Filter by name"></div>
+                        <div class="form-group"><label>&nbsp;</label><div style="display:flex;gap:10px;"><button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-search"></i> Generate</button><button class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button><button class="btn btn-danger" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> PDF</button></div></div>
+                    </div>
+                    <div id="reportResults" style="margin-top:20px;"></div>
+                </div>
+            `;
+        }
+
+        window.generateReport = async function() {
+            const startDate = document.getElementById('reportStartDate').value;
+            const endDate = document.getElementById('reportEndDate').value;
+            const employeeName = document.getElementById('reportEmployeeName')?.value.toLowerCase() || '';
+            
+            if (!startDate || !endDate) { showAlert('Select date range', 'error'); return; }
+            
+            try {
+                let query = db.collection('attendance').where('date', '>=', startDate).where('date', '<=', endDate);
+                if (currentUserRole !== 'admin') query = query.where('companyId', '==', currentUserCompany);
+                
+                const snapshot = await query.get();
+                let data = [];
+                snapshot.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+                
+                if (employeeName) data = data.filter(d => d.userName?.toLowerCase().includes(employeeName));
+                
+                // Process data to extract GPS coordinates properly
+                const processedData = data.map(record => {
+                    let startLat = '-', startLng = '-', endLat = '-', endLng = '-';
+                    let startTime = '-', endTime = '-';
+                    let type = 'Office Staff';
+                    
+                    // Extract start location
+                    if (record.checkInLocation) {
+                        startLat = record.checkInLocation.lat?.toFixed(6) || '-';
+                        startLng = record.checkInLocation.lng?.toFixed(6) || '-';
+                    }
+                    if (record.startLocation) {
+                        startLat = record.startLocation.lat?.toFixed(6) || '-';
+                        startLng = record.startLocation.lng?.toFixed(6) || '-';
+                    }
+                    
+                    // Extract end location
+                    if (record.checkOutLocation) {
+                        endLat = record.checkOutLocation.lat?.toFixed(6) || '-';
+                        endLng = record.checkOutLocation.lng?.toFixed(6) || '-';
+                    }
+                    if (record.endLocation) {
+                        endLat = record.endLocation.lat?.toFixed(6) || '-';
+                        endLng = record.endLocation.lng?.toFixed(6) || '-';
+                    }
+                    
+                    // Extract times
+                    if (record.checkIn) startTime = new Date(record.checkIn).toLocaleString();
+                    else if (record.tripStart) startTime = new Date(record.tripStart).toLocaleString();
+                    
+                    if (record.checkOut) endTime = new Date(record.checkOut).toLocaleString();
+                    else if (record.tripEnd) endTime = new Date(record.tripEnd).toLocaleString();
+                    
+                    // Type
+                    if (record.type === 'trip') type = '🚛 Trip Driver';
+                    else if (record.type === 'daily') type = 'Daily Driver';
+                    else if (record.type === 'manager') type = 'Manager';
+                    
+                    return {
+                        ...record,
+                        startLat, startLng, endLat, endLng,
+                        startTime, endTime,
+                        displayType: type,
+                        startLocationDisplay: `${startLat}, ${startLng}`,
+                        endLocationDisplay: `${endLat}, ${endLng}`,
+                        startMapLink: startLat !== '-' ? `https://www.google.com/maps?q=${startLat},${startLng}` : '#',
+                        endMapLink: endLat !== '-' ? `https://www.google.com/maps?q=${endLat},${endLng}` : '#'
+                    };
+                });
+                
+                window.reportData = processedData;
+                
+                const resultsDiv = document.getElementById('reportResults');
+                if (processedData.length === 0) {
+                    resultsDiv.innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No records found for the selected criteria</p>';
+                    return;
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div style="margin-bottom: 15px;"><strong>📊 Total Records: ${processedData.length}</strong></div>
+                    <div class="table-container">
+                        <table style="min-width: 1300px;">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                    <th>Employee</th><th>Type</th><th>Date</th><th>Start Time</th><th>End Time</th><th>Start Location (Lat, Lng)</th><th>End Location (Lat, Lng)</th><th>Photo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${processedData.map(d => `
+                                    <tr>
+                                        <td><strong>${d.userName}</strong></td>
+                                        <td>${d.displayType} ${d.tripNumber ? `#${d.tripNumber}` : ''}</td>
+                                        <td>${d.date}</td>
+                                        <td>${d.startTime}</td>
+                                        <td>${d.endTime}</td>
+                                        <td>
+                                            ${d.startLat !== '-' ? `<i class="fas fa-map-marker-alt" style="color:#28a745;"></i> ${d.startLat}, ${d.startLng}<br><a href="${d.startMapLink}" target="_blank" class="gps-link">View on Map</a>` : '-'}
+                                        </td>
+                                        <td>
+                                            ${d.endLat !== '-' ? `<i class="fas fa-map-marker-alt" style="color:#dc3545;"></i> ${d.endLat}, ${d.endLng}<br><a href="${d.endMapLink}" target="_blank" class="gps-link">View on Map</a>` : '-'}
+                                        </td>
+                                        <td><img src="${d.checkInPhoto || d.startPhoto}" width="40" height="40" style="border-radius:50%;cursor:pointer" onclick="window.open(this.src)"></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                showAlert('Error generating report: ' + error.message, 'error');
+            }
+        };
+
+        window.exportToExcel = function() {
+            if (!window.reportData?.length) { showAlert('Generate report first', 'error'); return; }
+            const data = window.reportData.map(r => ({
+                'Employee Name': r.userName,
+                'Type': r.displayType,
+                'Date': r.date,
+                'Start Time': r.startTime,
+                'End Time': r.endTime,
+                'Start Latitude': r.startLat,
+                'Start Longitude': r.startLng,
+                'End Latitude': r.endLat,
+                'End Longitude': r.endLng,
+                'Google Maps Start': r.startLat !== '-' ? `https://www.google.com/maps?q=${r.startLat},${r.startLng}` : '-',
+                'Google Maps End': r.endLat !== '-' ? `https://www.google.com/maps?q=${r.endLat},${r.endLng}` : '-'
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
+            XLSX.writeFile(wb, `SPEEDEL_Attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showAlert('Excel downloaded with GPS coordinates!', 'success');
+        };
+
+        window.exportToPDF = function() {
+            if (!window.reportData?.length) { showAlert('Generate report first', 'error'); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            doc.text('SPEEDEL EXPRESS - Attendance Report', 14, 10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 20);
+            const tableData = window.reportData.map(r => [r.userName, r.displayType, r.date, r.startTime, r.endTime, `${r.startLat}, ${r.startLng}`, `${r.endLat}, ${r.endLng}`]);
+            doc.autoTable({ head: [['Name', 'Type', 'Date', 'Start Time', 'End Time', 'Start Location', 'End Location']], body: tableData, startY: 30 });
+            doc.save(`SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+            showAlert('PDF downloaded with GPS coordinates!', 'success');
+        };
+
+        // Admin CRUD Functions
+        window.createCompany = async function() {
+            const name = document.getElementById('companyName').value;
+            if (!name) { showAlert('Enter company name', 'error'); return; }
+            await db.collection('companies').add({ name, address: document.getElementById('companyAddress').value, phone: document.getElementById('companyPhone').value, createdAt: new Date() });
+            showAlert('Company created!', 'success');
+            refreshCompaniesList();
+        };
+
+        window.editCompany = async function(id, name, address, phone) {
+            const newName = prompt('Enter new name:', name);
+            if (!newName) return;
+            await db.collection('companies').doc(id).update({ name: newName, address: prompt('Address:', address) || '', phone: prompt('Phone:', phone) || '' });
+            showAlert('Company updated!', 'success');
+            refreshCompaniesList();
+        };
+
+        window.deleteCompany = async function(id, name) {
+            if (confirm(`Delete "${name}"?`)) { await db.collection('companies').doc(id).delete(); showAlert('Company deleted!', 'success'); refreshCompaniesList(); }
+        };
+
+        window.createUser = async function() {
+            const name = document.getElementById('userName').value, email = document.getElementById('userEmail').value, password = document.getElementById('userPassword').value, role = document.getElementById('userRole').value, companyId = document.getElementById('userCompany').value, driverType = document.getElementById('driverType')?.value;
+            if (!name || !email || !password) { showAlert('Fill all fields', 'error'); return; }
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').add({ uid: userCredential.user.uid, name, email, role, companyId, driverType: role === 'driver' ? driverType : null, createdAt: new Date() });
+                showAlert('User created!', 'success');
+                refreshUsersList();
+            } catch (error) { showAlert('Error: ' + error.message, 'error'); }
+        };
+
+        window.editUser = async function(uid, name) {
+            const newName = prompt('Enter new name:', name);
+            if (!newName) return;
+            const snapshot = await db.collection('users').where('uid', '==', uid).get();
+            snapshot.forEach(async (doc) => { await db.collection('users').doc(doc.id).update({ name: newName }); showAlert('User updated!', 'success'); refreshUsersList(); });
+        };
+
+        window.resetUserPassword = async function(uid, email) {
+            try { await auth.sendPasswordResetEmail(email); showAlert(`Password reset email sent to ${email}`, 'success'); } catch (error) { showAlert('Error: ' + error.message, 'error'); }
+        };
+
+        window.changeSuperAdminPassword = async function() {
+            const currentPassword = prompt('Enter CURRENT password:');
+            if (!currentPassword) return;
+            const newPassword = prompt('Enter NEW password (min 6 chars):');
+            if (!newPassword || newPassword.length < 6) { showAlert('Min 6 characters', 'error'); return; }
+            const confirmPassword = prompt('Confirm NEW password:');
+            if (newPassword !== confirmPassword) { showAlert('Passwords do not match!', 'error'); return; }
+            try {
+                const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPassword);
+                await currentUser.reauthenticateWithCredential(credential);
+                await currentUser.updatePassword(newPassword);
+                showAlert('Password changed! Please login again.', 'success');
+                setTimeout(() => logout(), 2000);
+            } catch (error) { showAlert('Error: ' + error.message, 'error'); }
+        };
+
+        window.logout = async function() {
+            await auth.signOut();
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            currentUser = null;
+            renderLogin();
+        };
+
+        // Auth Listener
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if (!user) { renderLogin(); return; }
+            try {
+                if (user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+                    await ensureSuperAdminInFirestore(user);
+                    currentUserRole = 'admin';
+                    currentUserData = { name: 'Super Admin', role: 'admin' };
+                    renderMainLayout();
+                    return;
+                }
+                const snapshot = await db.collection('users').where('uid', '==', user.uid).get();
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => { currentUserData = doc.data(); currentUserRole = currentUserData.role; currentUserCompany = currentUserData.companyId; });
+                    renderMainLayout();
+                } else { showAlert('User role not found', 'error'); renderLogin(); }
+            } catch (error) { console.error('Error:', error); renderLogin(); }
+        });
+    </script>
+</body>
+</html>
