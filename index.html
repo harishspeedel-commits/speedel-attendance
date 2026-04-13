@@ -30,15 +30,24 @@
             z-index: 1000;
         }
         
-        .logo-text .main { color: white; font-size: 20px; font-weight: 800; background: none; -webkit-text-fill-color: white; }
+        .logo-text .main { color: white; font-size: 20px; font-weight: 800; }
         .logo-text .sub { font-size: 10px; color: rgba(255,255,255,0.8); }
         .logo-text .express { font-size: 14px; font-weight: 600; color: #FFD700; }
         
+        .nav-links { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .nav-btn { background: rgba(255,255,255,0.15); border: none; padding: 8px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 10px; transition: all 0.3s; color: white; display: flex; align-items: center; gap: 6px; }
         .nav-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
         .nav-btn.active { background: white; color: #FF6B35; }
         .logout-btn { background: #dc3545; color: white; }
         .logout-btn:hover { background: #c82333; }
+        
+        .main-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* Page visibility - FIXED */
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid rgba(255,107,53,0.1); }
         .card-header { font-size: 18px; font-weight: 700; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #FF6B35; display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; color: #333; }
@@ -50,27 +59,42 @@
         .btn-danger { background: #dc3545; color: white; }
         .btn-warning { background: #ffc107; color: #333; }
         .btn-info { background: #17a2b8; color: white; }
+        .btn-sm { padding: 4px 8px; font-size: 11px; }
         
         .stat-card { background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); border-radius: 20px; padding: 15px; color: white; text-align: center; cursor: pointer; transition: transform 0.3s; }
         .stat-card:hover { transform: translateY(-5px); }
+        .stat-number { font-size: 28px; font-weight: 800; }
+        .stat-label { font-size: 12px; opacity: 0.9; }
         
-        th { background: #FF6B35; color: white; padding: 12px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        
+        .table-container { overflow-x: auto; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #FF6B35; color: white; padding: 12px; font-size: 13px; }
+        td { padding: 10px; border-bottom: 1px solid #e0e0e0; font-size: 12px; }
         tr:hover { background: #FFF5F0; }
         
         .gps-link { color: #FF6B35; text-decoration: none; font-size: 11px; }
         .gps-link:hover { text-decoration: underline; }
         
-        input:focus, select:focus { border-color: #FF6B35; box-shadow: 0 0 0 3px rgba(255,107,53,0.1); }
+        input, select { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 13px; }
+        input:focus, select:focus { border-color: #FF6B35; outline: none; }
         
+        .alert { padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
         .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
         .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
         .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
         .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
         
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
         .badge-success { background: #d4edda; color: #155724; }
         .badge-warning { background: #fff3cd; color: #856404; }
         .badge-danger { background: #f8d7da; color: #721c24; }
-        .badge-info { background: #d1ecf1; color: #0c5460; }
+        
+        .webcam-box { background: #000; border-radius: 15px; overflow: hidden; text-align: center; padding: 10px; }
+        video, #photoPreview { width: 100%; max-width: 300px; border-radius: 10px; margin: 0 auto; }
         
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 10px; }
@@ -136,12 +160,24 @@
             return true;
         }
 
-        function navigateTo(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const target = document.getElementById(`page-${page}`);
-            if (target) target.classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            if(event && event.target) event.target.classList.add('active');
+        // Navigation function - FIXED
+        function navigateTo(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // Show selected page
+            const selectedPage = document.getElementById(`page-${pageName}`);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+            }
+            // Update active button state
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-page') === pageName) {
+                    btn.classList.add('active');
+                }
+            });
         }
 
         // ============ LOGIN ============
@@ -155,7 +191,6 @@
                                 <div><h2 style="color:#FF6B35;">SPEEDEL</h2><p style="color:#666;">EXPRESS</p></div>
                             </div>
                             <h3>Welcome Back</h3>
-                            <p style="font-size:13px;color:#666;">Login to your account</p>
                         </div>
                         <form id="loginForm">
                             <input type="email" id="email" placeholder="Email" style="width:100%;margin-bottom:12px;padding:12px;border-radius:10px;border:1px solid #ddd;">
@@ -186,29 +221,29 @@
                         <div><div class="logo-text"><span class="main">SPEEDEL</span><span class="sub">Delivery Redefined</span></div><div class="express">EXPRESS</div></div>
                     </div>
                     <div class="nav-links">
-                        <button class="nav-btn" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Home</button>
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('users')"><i class="fas fa-users"></i> Users</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('leaves')"><i class="fas fa-calendar"></i> Leaves</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('tasks')"><i class="fas fa-tasks"></i> Tasks</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('vehicles')"><i class="fas fa-truck"></i> Vehicles</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('customers')"><i class="fas fa-user-friends"></i> Customers</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('expenses')"><i class="fas fa-receipt"></i> Expenses</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('notices')"><i class="fas fa-bullhorn"></i> Notices</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('holidays')"><i class="fas fa-calendar-week"></i> Holidays</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('payroll')"><i class="fas fa-money-bill"></i> Payroll</button>` : ''}
-                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('settings')"><i class="fas fa-cog"></i> Settings</button>` : ''}
-                        <button class="nav-btn" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</button>
-                        <button class="nav-btn" onclick="navigateTo('my-leaves')"><i class="fas fa-calendar-minus"></i> My Leaves</button>
-                        <button class="nav-btn" onclick="navigateTo('my-tasks')"><i class="fas fa-clipboard-list"></i> My Tasks</button>
-                        <button class="nav-btn" onclick="navigateTo('noticeboard')"><i class="fas fa-bullhorn"></i> Notices</button>
-                        <button class="nav-btn" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</button>
+                        <button class="nav-btn" data-page="dashboard" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Home</button>
+                        ${isAdmin ? `<button class="nav-btn" data-page="companies" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="users" onclick="navigateTo('users')"><i class="fas fa-users"></i> Users</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="leaves" onclick="navigateTo('leaves')"><i class="fas fa-calendar"></i> Leaves</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="tasks" onclick="navigateTo('tasks')"><i class="fas fa-tasks"></i> Tasks</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="vehicles" onclick="navigateTo('vehicles')"><i class="fas fa-truck"></i> Vehicles</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="customers" onclick="navigateTo('customers')"><i class="fas fa-user-friends"></i> Customers</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="expenses" onclick="navigateTo('expenses')"><i class="fas fa-receipt"></i> Expenses</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="notices" onclick="navigateTo('notices')"><i class="fas fa-bullhorn"></i> Notices</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="holidays" onclick="navigateTo('holidays')"><i class="fas fa-calendar-week"></i> Holidays</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="payroll" onclick="navigateTo('payroll')"><i class="fas fa-money-bill"></i> Payroll</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" data-page="settings" onclick="navigateTo('settings')"><i class="fas fa-cog"></i> Settings</button>` : ''}
+                        <button class="nav-btn" data-page="attendance" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</button>
+                        <button class="nav-btn" data-page="my-leaves" onclick="navigateTo('my-leaves')"><i class="fas fa-calendar-minus"></i> My Leaves</button>
+                        <button class="nav-btn" data-page="my-tasks" onclick="navigateTo('my-tasks')"><i class="fas fa-clipboard-list"></i> My Tasks</button>
+                        <button class="nav-btn" data-page="noticeboard" onclick="navigateTo('noticeboard')"><i class="fas fa-bullhorn"></i> Notices</button>
+                        <button class="nav-btn" data-page="reports" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</button>
                         <button class="nav-btn logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
                     </div>
                 </div>
-                <div class="main-container" style="max-width:1400px;margin:0 auto;padding:20px;">
+                <div class="main-container">
                     <div id="alertContainer"></div>
-                    <div id="page-dashboard" class="page active"></div>
+                    <div id="page-dashboard" class="page"></div>
                     <div id="page-companies" class="page"></div><div id="page-users" class="page"></div>
                     <div id="page-leaves" class="page"></div><div id="page-tasks" class="page"></div>
                     <div id="page-vehicles" class="page"></div><div id="page-customers" class="page"></div>
@@ -220,6 +255,7 @@
                 </div>
             `;
             loadLogo();
+            // Load all page contents
             loadDashboard();
             if(isAdmin) { 
                 loadCompanies(); loadUsers(); loadLeavesAdmin(); loadTasksAdmin(); 
@@ -227,6 +263,8 @@
                 loadHolidays(); loadPayroll(); loadSettings(); 
             }
             loadAttendancePage(); loadMyLeaves(); loadMyTasks(); loadNoticeboard(); loadReports();
+            // Show dashboard by default
+            navigateTo('dashboard');
         }
 
         // ============ DASHBOARD ============
@@ -242,7 +280,7 @@
                 expenses.forEach(d=>totalExpenses+=d.data().amount||0);
             } catch(e){}
             document.getElementById('page-dashboard').innerHTML = `
-                <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;">
+                <div class="grid-4">
                     <div class="stat-card" onclick="navigateTo('users')"><div class="stat-number">${totalEmp}</div><div class="stat-label">Employees</div></div>
                     <div class="stat-card" onclick="navigateTo('attendance')"><div class="stat-number">${present}</div><div class="stat-label">Present Today</div></div>
                     <div class="stat-card" onclick="navigateTo('leaves')"><div class="stat-number">${pendingLeaves}</div><div class="stat-label">Pending Leaves</div></div>
@@ -250,7 +288,7 @@
                     <div class="stat-card" onclick="navigateTo('expenses')"><div class="stat-number">₹${totalExpenses}</div><div class="stat-label">Total Expenses</div></div>
                 </div>
                 <div class="card"><div class="card-header"><i class="fas fa-chart-line"></i> Quick Actions</div>
-                <div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+                <div class="grid-3">
                     <button class="btn btn-primary" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Mark Attendance</button>
                     <button class="btn btn-success" onclick="navigateTo('my-leaves')"><i class="fas fa-calendar"></i> Apply Leave</button>
                     <button class="btn btn-info" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> View Reports</button>
@@ -261,7 +299,7 @@
         // ============ COMPANIES ============
         async function loadCompanies() {
             let snap=await db.collection('companies').get();
-            let html=`<div class="card"><div class="card-header">🏢 Companies <button class="btn btn-primary btn-sm" onclick="addCompany()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Name</th><th>Branches</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">🏢 Companies <button class="btn btn-primary btn-sm" onclick="addCompany()">+ Add</button></div><div class="table-container"><table><thead><tr><th>Name</th><th>Branches</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let data=d.data(); html+=`<tr><td>${data.name}</td><td>${data.branches?.length||0}</td><td><button class="btn btn-warning btn-sm" onclick="editCompany('${d.id}','${data.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCompany('${d.id}')">Del</button></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-companies').innerHTML = html;
@@ -273,7 +311,7 @@
         // ============ USERS ============
         async function loadUsers() {
             let snap=await db.collection('users').get();
-            let html=`<div class="card"><div class="card-header">👥 Users <button class="btn btn-primary btn-sm" onclick="addUser()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Salary</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">👥 Users <button class="btn btn-primary btn-sm" onclick="addUser()">+ Add</button></div><div class="table-container"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Salary</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let u=d.data(); if(u.email !== ADMIN_EMAIL) { html+=`<tr><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>₹${u.salary||20000}</td><td><button class="btn btn-warning btn-sm" onclick="editUser('${u.uid}','${u.name}','${u.salary||20000}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="resetUserPwd('${u.email}')">Reset</button></td></tr>`; } });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-users').innerHTML = html;
@@ -289,10 +327,10 @@
         window.editUser = async(uid,name,salary)=>{ let newName=prompt('New name:',name); let newSalary=prompt('New salary:',salary); if(newName){ let snap=await db.collection('users').where('uid','==',uid).get(); snap.forEach(d=>db.collection('users').doc(d.id).update({name:newName, salary:parseInt(newSalary)})); loadUsers(); }};
         window.resetUserPwd = (email)=>{ auth.sendPasswordResetEmail(email); showAlert('Reset email sent','success'); };
 
-        // ============ LEAVES ============
+        // ============ LEAVES ADMIN ============
         async function loadLeavesAdmin() {
             let snap=await db.collection('leaves').get();
-            let html=`<div class="card"><div class="card-header">📅 Leave Requests</div><div class="table-container"><table style="width:100%"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">📅 Leave Requests</div><div class="table-container"><table><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let l=d.data(); html+=`<tr><td>${l.userName}</td><td>${l.type}</td><td>${l.fromDate} to ${l.toDate}</td><td>${l.reason}</td><td><span class="badge badge-${l.status==='approved'?'success':l.status==='pending'?'warning':'danger'}">${l.status}</span></td><td>${l.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveLeave('${d.id}')">Approve</button> <button class="btn btn-danger btn-sm" onclick="rejectLeave('${d.id}')">Reject</button>`:'-'}</td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-leaves').innerHTML = html;
@@ -300,9 +338,10 @@
         window.approveLeave = async(id)=>{ await db.collection('leaves').doc(id).update({status:'approved'}); loadLeavesAdmin(); showAlert('Leave approved','success'); };
         window.rejectLeave = async(id)=>{ await db.collection('leaves').doc(id).update({status:'rejected'}); loadLeavesAdmin(); };
 
+        // ============ MY LEAVES ============
         async function loadMyLeaves() {
             let snap=await db.collection('leaves').where('userId','==',currentUser.uid).get();
-            let html=`<div class="card"><div class="card-header">📝 My Leaves <button class="btn btn-primary btn-sm" onclick="applyLeave()">+ Apply</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">📝 My Leaves <button class="btn btn-primary btn-sm" onclick="applyLeave()">+ Apply</button></div><div class="table-container"><table><thead><tr><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let l=d.data(); html+=`<tr><td>${l.type}</td><td>${l.fromDate}</td><td>${l.toDate}</td><td>${l.reason}</td><td><span class="badge badge-${l.status==='approved'?'success':l.status==='pending'?'warning':'danger'}">${l.status}</span></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-my-leaves').innerHTML = html;
@@ -313,10 +352,10 @@
             loadMyLeaves(); showAlert('Leave applied','success');
         };
 
-        // ============ TASKS ============
+        // ============ TASKS ADMIN ============
         async function loadTasksAdmin() {
             let snap=await db.collection('tasks').get();
-            let html=`<div class="card"><div class="card-header">📋 All Tasks <button class="btn btn-primary btn-sm" onclick="assignTask()">+ Assign</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Driver</th><th>Task</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">📋 All Tasks <button class="btn btn-primary btn-sm" onclick="assignTask()">+ Assign</button></div><div class="table-container"><table><thead><tr><th>Driver</th><th>Task</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let t=d.data(); html+=`<tr><td>${t.driverName}</td><td>${t.title}</td><td>${t.location}</td><td><span class="badge badge-${t.status==='completed'?'success':t.status==='in-progress'?'warning':'info'}">${t.status}</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteTask('${d.id}')">Delete</button></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-tasks').innerHTML = html;
@@ -328,11 +367,12 @@
         };
         window.deleteTask = async(id)=>{ await db.collection('tasks').doc(id).delete(); loadTasksAdmin(); };
 
+        // ============ MY TASKS ============
         async function loadMyTasks() {
             let snap=await db.collection('tasks').where('driverEmail','==',currentUser.email).get();
-            let html=`<div class="card"><div class="card-header">📋 My Tasks</div><div class="table-container"><table style="width:100%"><thead><tr><th>Task</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">📋 My Tasks</div><div class="table-container"><table><thead><tr><th>Task</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let t=d.data(); html+=`<tr><td>${t.title}</td><td>${t.location}</td><td>${t.status}</td><td><button class="btn btn-success btn-sm" onclick="updateTask('${d.id}','completed')">Complete</button> <button class="btn btn-warning btn-sm" onclick="updateTask('${d.id}','in-progress')">Start</button></td></tr>`; });
-            html+=`</tbody></table></div></div>`;
+            html+=`</tbody><tr></div></div>`;
             document.getElementById('page-my-tasks').innerHTML = html;
         }
         window.updateTask = async(id,status)=>{ await db.collection('tasks').doc(id).update({status}); loadMyTasks(); showAlert('Task updated','success'); };
@@ -340,7 +380,7 @@
         // ============ VEHICLES ============
         async function loadVehicles() {
             let snap=await db.collection('vehicles').get();
-            let html=`<div class="card"><div class="card-header">🚛 Vehicles <button class="btn btn-primary btn-sm" onclick="addVehicle()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Number</th><th>Driver</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">🚛 Vehicles <button class="btn btn-primary btn-sm" onclick="addVehicle()">+ Add</button></div><div class="table-container"><table><thead><tr><th>Number</th><th>Driver</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let v=d.data(); html+=`<tr><td>${v.number}</td><td>${v.driver}</td><td>${v.status}</td><td><button class="btn btn-warning btn-sm" onclick="editVehicle('${d.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteVehicle('${d.id}')">Del</button></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-vehicles').innerHTML = html;
@@ -352,7 +392,7 @@
         // ============ CUSTOMERS ============
         async function loadCustomers() {
             let snap=await db.collection('customers').get();
-            let html=`<div class="card"><div class="card-header">👥 Customers <button class="btn btn-primary btn-sm" onclick="addCustomer()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">👥 Customers <button class="btn btn-primary btn-sm" onclick="addCustomer()">+ Add</button></div><div class="table-container"><table><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let c=d.data(); html+=`<tr><td>${c.name}</td><td>${c.phone}</td><td>${c.address}</td><td><button class="btn btn-danger btn-sm" onclick="deleteCustomer('${d.id}')">Del</button></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-customers').innerHTML = html;
@@ -360,7 +400,7 @@
         window.addCustomer = async()=>{ let name=prompt('Name:'), phone=prompt('Phone:'), address=prompt('Address:'); if(name) await db.collection('customers').add({name, phone, address, createdAt:new Date()}); loadCustomers(); };
         window.deleteCustomer = async(id)=>{ await db.collection('customers').doc(id).delete(); loadCustomers(); };
 
-        // ============ EXPENSES (FIXED) ============
+        // ============ EXPENSES ============
         async function loadExpenses() {
             let snap=await db.collection('expenses').orderBy('date','desc').get();
             let total=0;
@@ -381,10 +421,10 @@
         };
         window.deleteExpense = async(id)=>{ await db.collection('expenses').doc(id).delete(); loadExpenses(); showAlert('Expense deleted','success'); };
 
-        // ============ NOTICES ============
+        // ============ NOTICES ADMIN ============
         async function loadNoticesAdmin() {
             let snap=await db.collection('notices').orderBy('createdAt','desc').get();
-            let html=`<div class="card"><div class="card-header">📢 Announcements <button class="btn btn-primary btn-sm" onclick="addNotice()">+ Post</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Title</th><th>Content</th><th>Date</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">📢 Announcements <button class="btn btn-primary btn-sm" onclick="addNotice()">+ Post</button></div><div class="table-container"><tr><thead><tr><th>Title</th><th>Content</th><th>Date</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let n=d.data(); html+=`<tr><td><strong>${n.title}</strong></td><td>${n.content}</td><td>${new Date(n.createdAt?.toDate()).toLocaleDateString()}</td><td><button class="btn btn-danger btn-sm" onclick="deleteNotice('${d.id}')">Delete</button></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-notices').innerHTML = html;
@@ -392,6 +432,7 @@
         window.addNotice = async()=>{ let title=prompt('Title:'), content=prompt('Content:'); if(title) await db.collection('notices').add({title, content, createdAt:new Date()}); loadNoticesAdmin(); };
         window.deleteNotice = async(id)=>{ await db.collection('notices').doc(id).delete(); loadNoticesAdmin(); };
 
+        // ============ NOTICEBOARD ============
         async function loadNoticeboard() {
             let snap=await db.collection('notices').orderBy('createdAt','desc').get();
             let html=`<div class="card"><div class="card-header">📢 Notice Board</div><div style="display:grid;gap:15px;">`;
@@ -403,7 +444,7 @@
         // ============ HOLIDAYS ============
         async function loadHolidays() {
             let snap=await db.collection('holidays').get();
-            let html=`<div class="card"><div class="card-header">📅 Holidays <button class="btn btn-primary btn-sm" onclick="addHoliday()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Actions</th></tr></thead><tbody>`;
+            let html=`<div class="card"><div class="card-header">📅 Holidays <button class="btn btn-primary btn-sm" onclick="addHoliday()">+ Add</button></div><div class="table-container"></table><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Actions</th></tr></thead><tbody>`;
             snap.forEach(d=>{ let h=d.data(); html+=`<tr><td>${h.date}</td><td>${h.name}</td><td>${h.type}</td><td><button class="btn btn-danger btn-sm" onclick="deleteHoliday('${d.id}')">Delete</button></td></tr>`; });
             html+=`</tbody></table></div></div>`;
             document.getElementById('page-holidays').innerHTML = html;
@@ -411,7 +452,7 @@
         window.addHoliday = async()=>{ let date=prompt('Date (YYYY-MM-DD):'), name=prompt('Holiday name:'), type=prompt('Type (Public/Company):'); if(date&&name) await db.collection('holidays').add({date, name, type}); loadHolidays(); };
         window.deleteHoliday = async(id)=>{ await db.collection('holidays').doc(id).delete(); loadHolidays(); };
 
-        // ============ PAYROLL (FIXED) ============
+        // ============ PAYROLL ============
         async function loadPayroll() {
             let users=await db.collection('users').get();
             let month = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -546,7 +587,7 @@
             document.getElementById('page-attendance').innerHTML = `
                 <div class="card"><div class="card-header"><i class="fas fa-camera"></i> Mark Attendance</div>
                 <div id="attStatus" class="alert alert-info"></div>
-                <div class="webcam-box" style="background:#000;border-radius:15px;overflow:hidden;text-align:center;padding:10px;"><video id="webcam" autoplay playsinline style="width:100%;max-width:300px;margin:0 auto;"></video><canvas id="canvas" style="display:none;"></canvas><div id="previewDiv" style="display:none;"><img id="previewImg" style="width:100%;max-width:300px;"><p style="margin-top:10px;">✅ Selfie captured!</p></div></div>
+                <div class="webcam-box"><video id="webcam" autoplay playsinline style="width:100%;max-width:300px;margin:0 auto;"></video><canvas id="canvas" style="display:none;"></canvas><div id="previewDiv" style="display:none;"><img id="previewImg" style="width:100%;max-width:300px;"><p style="margin-top:10px;">✅ Selfie captured!</p></div></div>
                 <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
                     <button class="btn btn-primary" onclick="startCam()"><i class="fas fa-video"></i> Start Camera</button>
                     <button class="btn btn-success" onclick="captureSelfie()"><i class="fas fa-camera"></i> Take Selfie</button>
@@ -609,14 +650,14 @@
         };
         function resetAfterAction(){ currentPhoto=null; document.getElementById('previewDiv').style.display='none'; document.getElementById('webcam').style.display='block'; startCam(); }
 
-        // ============ REPORTS WITH GPS (ENHANCED) ============
+        // ============ REPORTS WITH GPS ============
         async function loadReports() {
             document.getElementById('page-reports').innerHTML = `
                 <div class="card"><div class="card-header"><i class="fas fa-chart-bar"></i> Generate Reports with GPS Location</div>
-                <div class="grid-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
-                    <input type="date" id="startDate" class="form-group" style="padding:10px;">
-                    <input type="date" id="endDate" class="form-group" style="padding:10px;">
-                    <input type="text" id="filterName" placeholder="Employee Name" style="padding:10px;">
+                <div class="grid-2">
+                    <input type="date" id="startDate">
+                    <input type="date" id="endDate">
+                    <input type="text" id="filterName" placeholder="Employee Name">
                     <div style="display:flex;gap:10px;">
                         <button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-search"></i> Generate</button>
                         <button class="btn btn-success" onclick="exportReportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
@@ -635,7 +676,6 @@
             let data=[]; snap.forEach(d=>data.push(d.data()));
             if(filter) data=data.filter(d=>d.userName?.toLowerCase().includes(filter));
             
-            // Enhanced data with GPS coordinates
             let processedData = data.map(record => {
                 let startLat = '-', startLng = '-', endLat = '-', endLng = '-';
                 let startLoc = '-', endLoc = '-';
@@ -677,16 +717,16 @@
             
             window.reportData = processedData;
             
-            let html = `<h3 style="margin-bottom:15px;">📊 ${processedData.length} Records Found</h3><div class="table-container"><table style="width:100%;min-width:900px;"><thead><tr><th>Employee</th><th>Date</th><th>Start Time</th><th>End Time</th><th>Start Location (Lat, Lng)</th><th>End Location (Lat, Lng)</th><th>Map</th><th>Photo</th></tr></thead><tbody>`;
+            let html = `<h3 style="margin-bottom:15px;">📊 ${processedData.length} Records Found</h3><div class="table-container"><table style="width:100%;min-width:900px;"><thead><tr><th>Employee</th><th>Date</th><th>Start Time</th><th>End Time</th><th>Start Location</th><th>End Location</th><th>Map</th><th>Photo</th></tr></thead><tbody>`;
             processedData.forEach(d=>{
                 html+=`<tr>
                     <td><strong>${d.userName}</strong></td>
                     <td>${d.date}</td>
                     <td>${d.checkIn?new Date(d.checkIn).toLocaleTimeString(): (d.tripStart?new Date(d.tripStart).toLocaleTimeString():'-')}</td>
                     <td>${d.checkOut?new Date(d.checkOut).toLocaleTimeString(): (d.tripEnd?new Date(d.tripEnd).toLocaleTimeString():'-')}</td>
-                    <td><i class="fas fa-map-marker-alt" style="color:#28a745;"></i> ${d.startLocationDisplay}<br><a href="${d.startMapLink}" target="_blank" class="gps-link">View on Google Maps</a></td>
-                    <td><i class="fas fa-map-marker-alt" style="color:#dc3545;"></i> ${d.endLocationDisplay}<br><a href="${d.endMapLink}" target="_blank" class="gps-link">View on Google Maps</a></td>
-                    <td><a href="https://www.google.com/maps?q=${d.startLat},${d.startLng}" target="_blank" class="btn btn-info btn-sm" style="padding:4px 8px;"><i class="fas fa-map"></i> Map</a></td>
+                    <td><i class="fas fa-map-marker-alt" style="color:#28a745;"></i> ${d.startLocationDisplay}<br><a href="${d.startMapLink}" target="_blank" class="gps-link">View on Map</a></td>
+                    <td><i class="fas fa-map-marker-alt" style="color:#dc3545;"></i> ${d.endLocationDisplay}<br><a href="${d.endMapLink}" target="_blank" class="gps-link">View on Map</a></td>
+                    <td><a href="${d.startMapLink}" target="_blank" class="btn btn-info btn-sm" style="padding:4px 8px;"><i class="fas fa-map"></i> Map</a></td>
                     <td><img src="${d.checkInPhoto||d.startPhoto}" width="35" height="35" style="border-radius:50%;cursor:pointer;object-fit:cover;" onclick="window.open(this.src)"></td>
                 </tr>`;
             });
