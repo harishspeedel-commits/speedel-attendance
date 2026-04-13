@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SPEEDEL EXPRESS - Ultimate Enterprise System</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f4f8; }
+        
+        /* Orange, White, Blue Theme */
+        .navbar {
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo-text .main { color: white; font-size: 20px; font-weight: 800; background: none; -webkit-text-fill-color: white; }
+        .logo-text .sub { font-size: 10px; color: rgba(255,255,255,0.8); }
+        .logo-text .express { font-size: 14px; font-weight: 600; color: #FFD700; }
+        
+        .nav-btn { background: rgba(255,255,255,0.15); border: none; padding: 8px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 10px; transition: all 0.3s; color: white; display: flex; align-items: center; gap: 6px; }
+        .nav-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .nav-btn.active { background: white; color: #FF6B35; }
+        .logout-btn { background: #dc3545; color: white; }
+        .logout-btn:hover { background: #c82333; }
+        
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid rgba(255,107,53,0.1); }
+        .card-header { font-size: 18px; font-weight: 700; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #FF6B35; display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; color: #333; }
+        .card-header i { color: #FF6B35; font-size: 20px; }
+        
+        .btn-primary { background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); color: white; border: none; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,107,53,0.4); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-info { background: #17a2b8; color: white; }
+        
+        .stat-card { background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); border-radius: 20px; padding: 15px; color: white; text-align: center; cursor: pointer; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        th { background: #FF6B35; color: white; padding: 12px; }
+        tr:hover { background: #FFF5F0; }
+        
+        .gps-link { color: #FF6B35; text-decoration: none; font-size: 11px; }
+        .gps-link:hover { text-decoration: underline; }
+        
+        input:focus, select:focus { border-color: #FF6B35; box-shadow: 0 0 0 3px rgba(255,107,53,0.1); }
+        
+        .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+        .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 10px; }
+            .nav-links { justify-content: center; max-height: 200px; overflow-y: auto; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWXXso720Qo8Q5A-nHge6DtoamYzLn97Q",
+            authDomain: "speedel-attendance.firebaseapp.com",
+            projectId: "speedel-attendance",
+            storageBucket: "speedel-attendance.firebasestorage.app",
+            messagingSenderId: "693149953722",
+            appId: "1:693149953722:web:1bc91ae862fd46778bdc83"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let currentUser = null, currentUserRole = null, currentUserCompany = null, currentUserData = null;
+        let currentPhoto = null, stream = null, currentLocation = null, currentLogoUrl = null;
+        const ADMIN_EMAIL = "Harishspeedel@gmail.com";
+
+        function showAlert(msg, type) {
+            const container = document.getElementById('alertContainer');
+            if (!container) return;
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        async function loadLogo() {
+            try {
+                const doc = await db.collection('settings').doc('companyLogo').get();
+                currentLogoUrl = doc.exists && doc.data().logoUrl ? doc.data().logoUrl : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FF6B35'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E";
+                document.querySelectorAll('.logo-img').forEach(img => img.src = currentLogoUrl);
+            } catch(e) {}
+        }
+
+        async function ensureAdminInFirestore(user) {
+            if (user.email !== ADMIN_EMAIL) return false;
+            const snapshot = await db.collection('users').where('uid', '==', user.uid).get();
+            if (snapshot.empty) {
+                await db.collection('users').add({
+                    uid: user.uid, name: "Super Admin", email: ADMIN_EMAIL,
+                    role: "admin", companyId: "", salary: 50000, createdAt: new Date()
+                });
+            }
+            return true;
+        }
+
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`page-${page}`);
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            if(event && event.target) event.target.classList.add('active');
+        }
+
+        // ============ LOGIN ============
+        function renderLogin() {
+            document.getElementById('app').innerHTML = `
+                <div style="min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);">
+                    <div class="card" style="max-width:400px;width:100%;margin:20px;">
+                        <div style="text-align:center;margin-bottom:25px;">
+                            <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:15px;">
+                                <img id="loginLogo" class="logo-img" style="width:50px;height:50px;" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FF6B35'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E">
+                                <div><h2 style="color:#FF6B35;">SPEEDEL</h2><p style="color:#666;">EXPRESS</p></div>
+                            </div>
+                            <h3>Welcome Back</h3>
+                            <p style="font-size:13px;color:#666;">Login to your account</p>
+                        </div>
+                        <form id="loginForm">
+                            <input type="email" id="email" placeholder="Email" style="width:100%;margin-bottom:12px;padding:12px;border-radius:10px;border:1px solid #ddd;">
+                            <input type="password" id="password" placeholder="Password" style="width:100%;margin-bottom:20px;padding:12px;border-radius:10px;border:1px solid #ddd;">
+                            <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;">Login</button>
+                        </form>
+                        <div id="alertContainer" style="margin-top:15px;"></div>
+                    </div>
+                </div>
+            `;
+            loadLogo();
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value);
+                    showAlert('Login successful!', 'success');
+                } catch(error) { showAlert('Login failed: ' + error.message, 'error'); }
+            });
+        }
+
+        // ============ MAIN LAYOUT ============
+        function renderMainLayout() {
+            const isAdmin = currentUserRole === 'admin';
+            document.getElementById('app').innerHTML = `
+                <div class="navbar">
+                    <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="navigateTo('dashboard')">
+                        <img id="navLogo" class="logo-img" style="width:40px;height:40px;background:white;border-radius:10px;padding:5px;" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FF6B35'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E">
+                        <div><div class="logo-text"><span class="main">SPEEDEL</span><span class="sub">Delivery Redefined</span></div><div class="express">EXPRESS</div></div>
+                    </div>
+                    <div class="nav-links">
+                        <button class="nav-btn" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Home</button>
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('users')"><i class="fas fa-users"></i> Users</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('leaves')"><i class="fas fa-calendar"></i> Leaves</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('tasks')"><i class="fas fa-tasks"></i> Tasks</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('vehicles')"><i class="fas fa-truck"></i> Vehicles</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('customers')"><i class="fas fa-user-friends"></i> Customers</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('expenses')"><i class="fas fa-receipt"></i> Expenses</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('notices')"><i class="fas fa-bullhorn"></i> Notices</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('holidays')"><i class="fas fa-calendar-week"></i> Holidays</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('payroll')"><i class="fas fa-money-bill"></i> Payroll</button>` : ''}
+                        ${isAdmin ? `<button class="nav-btn" onclick="navigateTo('settings')"><i class="fas fa-cog"></i> Settings</button>` : ''}
+                        <button class="nav-btn" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</button>
+                        <button class="nav-btn" onclick="navigateTo('my-leaves')"><i class="fas fa-calendar-minus"></i> My Leaves</button>
+                        <button class="nav-btn" onclick="navigateTo('my-tasks')"><i class="fas fa-clipboard-list"></i> My Tasks</button>
+                        <button class="nav-btn" onclick="navigateTo('noticeboard')"><i class="fas fa-bullhorn"></i> Notices</button>
+                        <button class="nav-btn" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</button>
+                        <button class="nav-btn logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                </div>
+                <div class="main-container" style="max-width:1400px;margin:0 auto;padding:20px;">
+                    <div id="alertContainer"></div>
+                    <div id="page-dashboard" class="page active"></div>
+                    <div id="page-companies" class="page"></div><div id="page-users" class="page"></div>
+                    <div id="page-leaves" class="page"></div><div id="page-tasks" class="page"></div>
+                    <div id="page-vehicles" class="page"></div><div id="page-customers" class="page"></div>
+                    <div id="page-expenses" class="page"></div><div id="page-notices" class="page"></div>
+                    <div id="page-holidays" class="page"></div><div id="page-payroll" class="page"></div>
+                    <div id="page-settings" class="page"></div><div id="page-attendance" class="page"></div>
+                    <div id="page-my-leaves" class="page"></div><div id="page-my-tasks" class="page"></div>
+                    <div id="page-noticeboard" class="page"></div><div id="page-reports" class="page"></div>
+                </div>
+            `;
+            loadLogo();
+            loadDashboard();
+            if(isAdmin) { 
+                loadCompanies(); loadUsers(); loadLeavesAdmin(); loadTasksAdmin(); 
+                loadVehicles(); loadCustomers(); loadExpenses(); loadNoticesAdmin(); 
+                loadHolidays(); loadPayroll(); loadSettings(); 
+            }
+            loadAttendancePage(); loadMyLeaves(); loadMyTasks(); loadNoticeboard(); loadReports();
+        }
+
+        // ============ DASHBOARD ============
+        async function loadDashboard() {
+            let totalEmp=0, present=0, pendingLeaves=0, pendingTasks=0, totalExpenses=0;
+            try {
+                let users=await db.collection('users').get(); totalEmp=users.size;
+                let today=new Date().toISOString().split('T')[0];
+                let att=await db.collection('attendance').where('date','==',today).get(); present=att.size;
+                let leaves=await db.collection('leaves').where('status','==','pending').get(); pendingLeaves=leaves.size;
+                let tasks=await db.collection('tasks').where('status','==','pending').get(); pendingTasks=tasks.size;
+                let expenses=await db.collection('expenses').get();
+                expenses.forEach(d=>totalExpenses+=d.data().amount||0);
+            } catch(e){}
+            document.getElementById('page-dashboard').innerHTML = `
+                <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;">
+                    <div class="stat-card" onclick="navigateTo('users')"><div class="stat-number">${totalEmp}</div><div class="stat-label">Employees</div></div>
+                    <div class="stat-card" onclick="navigateTo('attendance')"><div class="stat-number">${present}</div><div class="stat-label">Present Today</div></div>
+                    <div class="stat-card" onclick="navigateTo('leaves')"><div class="stat-number">${pendingLeaves}</div><div class="stat-label">Pending Leaves</div></div>
+                    <div class="stat-card" onclick="navigateTo('tasks')"><div class="stat-number">${pendingTasks}</div><div class="stat-label">Pending Tasks</div></div>
+                    <div class="stat-card" onclick="navigateTo('expenses')"><div class="stat-number">₹${totalExpenses}</div><div class="stat-label">Total Expenses</div></div>
+                </div>
+                <div class="card"><div class="card-header"><i class="fas fa-chart-line"></i> Quick Actions</div>
+                <div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+                    <button class="btn btn-primary" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Mark Attendance</button>
+                    <button class="btn btn-success" onclick="navigateTo('my-leaves')"><i class="fas fa-calendar"></i> Apply Leave</button>
+                    <button class="btn btn-info" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> View Reports</button>
+                </div></div>
+            `;
+        }
+
+        // ============ COMPANIES ============
+        async function loadCompanies() {
+            let snap=await db.collection('companies').get();
+            let html=`<div class="card"><div class="card-header">🏢 Companies <button class="btn btn-primary btn-sm" onclick="addCompany()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Name</th><th>Branches</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let data=d.data(); html+=`<tr><td>${data.name}</td><td>${data.branches?.length||0}</td><td><button class="btn btn-warning btn-sm" onclick="editCompany('${d.id}','${data.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCompany('${d.id}')">Del</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-companies').innerHTML = html;
+        }
+        window.addCompany = async()=>{ let name=prompt('Company name:'); if(name) await db.collection('companies').add({name, branches:[], createdAt:new Date()}); loadCompanies(); };
+        window.editCompany = async(id,name)=>{ let newName=prompt('New name:',name); if(newName) await db.collection('companies').doc(id).update({name:newName}); loadCompanies(); };
+        window.deleteCompany = async(id)=>{ if(confirm('Delete?')) await db.collection('companies').doc(id).delete(); loadCompanies(); };
+
+        // ============ USERS ============
+        async function loadUsers() {
+            let snap=await db.collection('users').get();
+            let html=`<div class="card"><div class="card-header">👥 Users <button class="btn btn-primary btn-sm" onclick="addUser()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Salary</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let u=d.data(); if(u.email !== ADMIN_EMAIL) { html+=`<tr><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>₹${u.salary||20000}</td><td><button class="btn btn-warning btn-sm" onclick="editUser('${u.uid}','${u.name}','${u.salary||20000}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="resetUserPwd('${u.email}')">Reset</button></td></tr>`; } });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-users').innerHTML = html;
+        }
+        window.addUser = async()=>{
+            let name=prompt('Name:'), email=prompt('Email:'), pass=prompt('Password:'), role=prompt('Role (company_manager/office_staff/driver):'), salary=prompt('Salary:');
+            if(name&&email&&pass){
+                let cred=await auth.createUserWithEmailAndPassword(email,pass);
+                await db.collection('users').add({uid:cred.user.uid, name, email, role, salary:parseInt(salary)||20000, rating:0, createdAt:new Date()});
+                showAlert('User created','success'); loadUsers();
+            }
+        };
+        window.editUser = async(uid,name,salary)=>{ let newName=prompt('New name:',name); let newSalary=prompt('New salary:',salary); if(newName){ let snap=await db.collection('users').where('uid','==',uid).get(); snap.forEach(d=>db.collection('users').doc(d.id).update({name:newName, salary:parseInt(newSalary)})); loadUsers(); }};
+        window.resetUserPwd = (email)=>{ auth.sendPasswordResetEmail(email); showAlert('Reset email sent','success'); };
+
+        // ============ LEAVES ============
+        async function loadLeavesAdmin() {
+            let snap=await db.collection('leaves').get();
+            let html=`<div class="card"><div class="card-header">📅 Leave Requests</div><div class="table-container"><table style="width:100%"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let l=d.data(); html+=`<tr><td>${l.userName}</td><td>${l.type}</td><td>${l.fromDate} to ${l.toDate}</td><td>${l.reason}</td><td><span class="badge badge-${l.status==='approved'?'success':l.status==='pending'?'warning':'danger'}">${l.status}</span></td><td>${l.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveLeave('${d.id}')">Approve</button> <button class="btn btn-danger btn-sm" onclick="rejectLeave('${d.id}')">Reject</button>`:'-'}</td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-leaves').innerHTML = html;
+        }
+        window.approveLeave = async(id)=>{ await db.collection('leaves').doc(id).update({status:'approved'}); loadLeavesAdmin(); showAlert('Leave approved','success'); };
+        window.rejectLeave = async(id)=>{ await db.collection('leaves').doc(id).update({status:'rejected'}); loadLeavesAdmin(); };
+
+        async function loadMyLeaves() {
+            let snap=await db.collection('leaves').where('userId','==',currentUser.uid).get();
+            let html=`<div class="card"><div class="card-header">📝 My Leaves <button class="btn btn-primary btn-sm" onclick="applyLeave()">+ Apply</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let l=d.data(); html+=`<tr><td>${l.type}</td><td>${l.fromDate}</td><td>${l.toDate}</td><td>${l.reason}</td><td><span class="badge badge-${l.status==='approved'?'success':l.status==='pending'?'warning':'danger'}">${l.status}</span></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-my-leaves').innerHTML = html;
+        }
+        window.applyLeave = async()=>{
+            let type=prompt('Leave type (Sick/Casual/Paid):'), from=prompt('From date (YYYY-MM-DD):'), to=prompt('To date (YYYY-MM-DD):'), reason=prompt('Reason:');
+            if(type&&from&&to) await db.collection('leaves').add({userId:currentUser.uid, userName:currentUserData.name, type, fromDate:from, toDate:to, reason, status:'pending', createdAt:new Date()});
+            loadMyLeaves(); showAlert('Leave applied','success');
+        };
+
+        // ============ TASKS ============
+        async function loadTasksAdmin() {
+            let snap=await db.collection('tasks').get();
+            let html=`<div class="card"><div class="card-header">📋 All Tasks <button class="btn btn-primary btn-sm" onclick="assignTask()">+ Assign</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Driver</th><th>Task</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let t=d.data(); html+=`<tr><td>${t.driverName}</td><td>${t.title}</td><td>${t.location}</td><td><span class="badge badge-${t.status==='completed'?'success':t.status==='in-progress'?'warning':'info'}">${t.status}</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteTask('${d.id}')">Delete</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-tasks').innerHTML = html;
+        }
+        window.assignTask = async()=>{
+            let driver=prompt('Driver email:'), title=prompt('Task title:'), location=prompt('Location:');
+            if(driver&&title) await db.collection('tasks').add({driverEmail:driver, driverName:driver, title, location, status:'pending', createdAt:new Date()});
+            loadTasksAdmin(); showAlert('Task assigned','success');
+        };
+        window.deleteTask = async(id)=>{ await db.collection('tasks').doc(id).delete(); loadTasksAdmin(); };
+
+        async function loadMyTasks() {
+            let snap=await db.collection('tasks').where('driverEmail','==',currentUser.email).get();
+            let html=`<div class="card"><div class="card-header">📋 My Tasks</div><div class="table-container"><table style="width:100%"><thead><tr><th>Task</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let t=d.data(); html+=`<tr><td>${t.title}</td><td>${t.location}</td><td>${t.status}</td><td><button class="btn btn-success btn-sm" onclick="updateTask('${d.id}','completed')">Complete</button> <button class="btn btn-warning btn-sm" onclick="updateTask('${d.id}','in-progress')">Start</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-my-tasks').innerHTML = html;
+        }
+        window.updateTask = async(id,status)=>{ await db.collection('tasks').doc(id).update({status}); loadMyTasks(); showAlert('Task updated','success'); };
+
+        // ============ VEHICLES ============
+        async function loadVehicles() {
+            let snap=await db.collection('vehicles').get();
+            let html=`<div class="card"><div class="card-header">🚛 Vehicles <button class="btn btn-primary btn-sm" onclick="addVehicle()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Number</th><th>Driver</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let v=d.data(); html+=`<tr><td>${v.number}</td><td>${v.driver}</td><td>${v.status}</td><td><button class="btn btn-warning btn-sm" onclick="editVehicle('${d.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteVehicle('${d.id}')">Del</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-vehicles').innerHTML = html;
+        }
+        window.addVehicle = async()=>{ let num=prompt('Vehicle number:'); if(num) await db.collection('vehicles').add({number:num, driver:'', status:'available', createdAt:new Date()}); loadVehicles(); };
+        window.editVehicle = async(id)=>{ let driver=prompt('Assign driver email:'); if(driver) await db.collection('vehicles').doc(id).update({driver}); loadVehicles(); };
+        window.deleteVehicle = async(id)=>{ await db.collection('vehicles').doc(id).delete(); loadVehicles(); };
+
+        // ============ CUSTOMERS ============
+        async function loadCustomers() {
+            let snap=await db.collection('customers').get();
+            let html=`<div class="card"><div class="card-header">👥 Customers <button class="btn btn-primary btn-sm" onclick="addCustomer()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let c=d.data(); html+=`<tr><td>${c.name}</td><td>${c.phone}</td><td>${c.address}</td><td><button class="btn btn-danger btn-sm" onclick="deleteCustomer('${d.id}')">Del</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-customers').innerHTML = html;
+        }
+        window.addCustomer = async()=>{ let name=prompt('Name:'), phone=prompt('Phone:'), address=prompt('Address:'); if(name) await db.collection('customers').add({name, phone, address, createdAt:new Date()}); loadCustomers(); };
+        window.deleteCustomer = async(id)=>{ await db.collection('customers').doc(id).delete(); loadCustomers(); };
+
+        // ============ EXPENSES (FIXED) ============
+        async function loadExpenses() {
+            let snap=await db.collection('expenses').orderBy('date','desc').get();
+            let total=0;
+            let html=`<div class="card"><div class="card-header">💰 Expenses <button class="btn btn-primary btn-sm" onclick="showAddExpenseModal()">+ Add Expense</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Description</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let e=d.data(); total+=e.amount; html+=`<tr><td>${e.date}</td><td>${e.category}</td><td style="color:#dc3545;font-weight:bold;">₹${e.amount}</td><td>${e.description||'-'}</td><td><button class="btn btn-danger btn-sm" onclick="deleteExpense('${d.id}')">Delete</button></td></tr>`; });
+            html+=`<tr style="background:#FFF5F0;font-weight:bold;"><td colspan="2"><strong>Total Expenses</strong></td><td colspan="3"><strong style="color:#FF6B35;">₹${total.toFixed(2)}</strong></td></tr>`;
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-expenses').innerHTML = html;
+        }
+        window.showAddExpenseModal = () => {
+            let date = new Date().toISOString().split('T')[0];
+            let category = prompt('Category (Fuel/Maintenance/Food/Office/Other):');
+            if(!category) return;
+            let amount = parseFloat(prompt('Amount (₹):'));
+            if(isNaN(amount)) return;
+            let description = prompt('Description:');
+            db.collection('expenses').add({date, category, amount, description, createdAt:new Date()}).then(()=>{ loadExpenses(); showAlert('Expense added','success'); });
+        };
+        window.deleteExpense = async(id)=>{ await db.collection('expenses').doc(id).delete(); loadExpenses(); showAlert('Expense deleted','success'); };
+
+        // ============ NOTICES ============
+        async function loadNoticesAdmin() {
+            let snap=await db.collection('notices').orderBy('createdAt','desc').get();
+            let html=`<div class="card"><div class="card-header">📢 Announcements <button class="btn btn-primary btn-sm" onclick="addNotice()">+ Post</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Title</th><th>Content</th><th>Date</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let n=d.data(); html+=`<tr><td><strong>${n.title}</strong></td><td>${n.content}</td><td>${new Date(n.createdAt?.toDate()).toLocaleDateString()}</td><td><button class="btn btn-danger btn-sm" onclick="deleteNotice('${d.id}')">Delete</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-notices').innerHTML = html;
+        }
+        window.addNotice = async()=>{ let title=prompt('Title:'), content=prompt('Content:'); if(title) await db.collection('notices').add({title, content, createdAt:new Date()}); loadNoticesAdmin(); };
+        window.deleteNotice = async(id)=>{ await db.collection('notices').doc(id).delete(); loadNoticesAdmin(); };
+
+        async function loadNoticeboard() {
+            let snap=await db.collection('notices').orderBy('createdAt','desc').get();
+            let html=`<div class="card"><div class="card-header">📢 Notice Board</div><div style="display:grid;gap:15px;">`;
+            snap.forEach(d=>{ let n=d.data(); html+=`<div style="background:#FFF5F0;padding:15px;border-radius:15px;border-left:4px solid #FF6B35;"><h4><i class="fas fa-bullhorn" style="color:#FF6B35;"></i> ${n.title}</h4><p style="margin-top:8px;">${n.content}</p><small style="color:#888;">${new Date(n.createdAt?.toDate()).toLocaleDateString()}</small></div>`; });
+            html+=`</div></div>`;
+            document.getElementById('page-noticeboard').innerHTML = html;
+        }
+
+        // ============ HOLIDAYS ============
+        async function loadHolidays() {
+            let snap=await db.collection('holidays').get();
+            let html=`<div class="card"><div class="card-header">📅 Holidays <button class="btn btn-primary btn-sm" onclick="addHoliday()">+ Add</button></div><div class="table-container"><table style="width:100%"><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Actions</th></tr></thead><tbody>`;
+            snap.forEach(d=>{ let h=d.data(); html+=`<tr><td>${h.date}</td><td>${h.name}</td><td>${h.type}</td><td><button class="btn btn-danger btn-sm" onclick="deleteHoliday('${d.id}')">Delete</button></td></tr>`; });
+            html+=`</tbody></table></div></div>`;
+            document.getElementById('page-holidays').innerHTML = html;
+        }
+        window.addHoliday = async()=>{ let date=prompt('Date (YYYY-MM-DD):'), name=prompt('Holiday name:'), type=prompt('Type (Public/Company):'); if(date&&name) await db.collection('holidays').add({date, name, type}); loadHolidays(); };
+        window.deleteHoliday = async(id)=>{ await db.collection('holidays').doc(id).delete(); loadHolidays(); };
+
+        // ============ PAYROLL (FIXED) ============
+        async function loadPayroll() {
+            let users=await db.collection('users').get();
+            let month = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+            let html=`<div class="card"><div class="card-header">💰 Payroll - ${month}</div><div class="table-container"><table style="width:100%"><thead><tr><th>Employee</th><th>Base Salary</th><th>Days Present</th><th>Days Absent</th><th>Deductions</th><th>Net Salary</th><th>Status</th></tr></thead><tbody>`;
+            
+            for(let u of users.docs){
+                let data = u.data();
+                if(data.email !== ADMIN_EMAIL) {
+                    let startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+                    let endOfMonth = new Date(); endOfMonth.setMonth(endOfMonth.getMonth()+1); endOfMonth.setDate(0);
+                    let startStr = startOfMonth.toISOString().split('T')[0];
+                    let endStr = endOfMonth.toISOString().split('T')[0];
+                    
+                    let att = await db.collection('attendance').where('userId','==',data.uid).where('date','>=',startStr).where('date','<=',endStr).get();
+                    let daysPresent = att.size;
+                    let workingDays = 26;
+                    let daysAbsent = Math.max(0, workingDays - daysPresent);
+                    let salary = data.salary || 20000;
+                    let perDaySalary = salary / workingDays;
+                    let deduction = daysAbsent * perDaySalary;
+                    let netSalary = salary - deduction;
+                    
+                    html+=`<tr><td><strong>${data.name}</strong></td><td>₹${salary.toLocaleString()}</td><td>${daysPresent}</td><td>${daysAbsent}</td><td style="color:#dc3545;">₹${deduction.toFixed(0)}</td><td style="color:#28a745;font-weight:bold;">₹${netSalary.toFixed(0)}</td><td><span class="badge badge-success">Ready</span></td></tr>`;
+                }
+            }
+            html+=`</tbody></table><button class="btn btn-success" style="margin-top:15px;" onclick="exportPayroll()"><i class="fas fa-file-excel"></i> Export Payroll to Excel</button></div></div>`;
+            document.getElementById('page-payroll').innerHTML = html;
+        }
+        
+        window.exportPayroll = async function() {
+            let users=await db.collection('users').get();
+            let payrollData = [];
+            let startOfMonth = new Date(); startOfMonth.setDate(1);
+            let endOfMonth = new Date(); endOfMonth.setMonth(endOfMonth.getMonth()+1); endOfMonth.setDate(0);
+            let startStr = startOfMonth.toISOString().split('T')[0];
+            let endStr = endOfMonth.toISOString().split('T')[0];
+            
+            for(let u of users.docs){
+                let data = u.data();
+                if(data.email !== ADMIN_EMAIL) {
+                    let att = await db.collection('attendance').where('userId','==',data.uid).where('date','>=',startStr).where('date','<=',endStr).get();
+                    let daysPresent = att.size;
+                    let workingDays = 26;
+                    let daysAbsent = Math.max(0, workingDays - daysPresent);
+                    let salary = data.salary || 20000;
+                    let perDaySalary = salary / workingDays;
+                    let deduction = daysAbsent * perDaySalary;
+                    let netSalary = salary - deduction;
+                    payrollData.push({
+                        'Employee Name': data.name,
+                        'Email': data.email,
+                        'Role': data.role,
+                        'Base Salary': salary,
+                        'Days Present': daysPresent,
+                        'Days Absent': daysAbsent,
+                        'Deduction': deduction,
+                        'Net Salary': netSalary
+                    });
+                }
+            }
+            let ws = XLSX.utils.json_to_sheet(payrollData);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Payroll_${new Date().toLocaleString('default',{month:'long'})}`);
+            XLSX.writeFile(wb, `SPEEDEL_Payroll_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showAlert('Payroll exported to Excel!', 'success');
+        };
+
+        // ============ SETTINGS ============
+        async function loadSettings() {
+            document.getElementById('page-settings').innerHTML = `
+                <div class="card"><div class="card-header"><i class="fas fa-image"></i> Logo Settings</div>
+                <div style="text-align:center;padding:15px;"><img id="logoPreview" src="${currentLogoUrl}" style="max-width:120px;border-radius:10px;"></div>
+                <input type="file" id="logoFile" accept="image/*" onchange="uploadLogo(this)" class="form-group">
+                <button class="btn btn-danger" style="margin-top:10px;" onclick="resetLogo()">Reset Logo</button>
+                </div>
+                <div class="card"><div class="card-header"><i class="fas fa-lock"></i> Security</div>
+                <button class="btn btn-warning" onclick="changeAdminPassword()">Change Admin Password</button>
+                <button class="btn btn-info" onclick="exportAllData()">Export All Data (Backup)</button>
+                </div>
+            `;
+        }
+        window.uploadLogo = async(input)=>{
+            let file=input.files[0];
+            if(file){
+                let ref=storage.ref().child(`logo/logo_${Date.now()}`);
+                await ref.put(file);
+                let url=await ref.getDownloadURL();
+                await db.collection('settings').doc('companyLogo').set({logoUrl:url});
+                currentLogoUrl=url;
+                document.querySelectorAll('.logo-img').forEach(img=>img.src=url);
+                document.getElementById('logoPreview').src=url;
+                showAlert('Logo updated','success');
+            }
+        };
+        window.resetLogo = async()=>{
+            await db.collection('settings').doc('companyLogo').delete();
+            currentLogoUrl="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FF6B35'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E";
+            document.querySelectorAll('.logo-img').forEach(img=>img.src=currentLogoUrl);
+            if(document.getElementById('logoPreview')) document.getElementById('logoPreview').src=currentLogoUrl;
+            showAlert('Logo reset','success');
+        };
+        window.changeAdminPassword = async()=>{
+            let old=prompt('Current password:');
+            if(!old) return;
+            let newPwd=prompt('New password (min 6 chars):');
+            if(!newPwd||newPwd.length<6){ showAlert('Min 6 chars','error'); return; }
+            let confirm=prompt('Confirm password:');
+            if(newPwd!==confirm){ showAlert('Passwords do not match','error'); return; }
+            try{
+                let cred=firebase.auth.EmailAuthProvider.credential(currentUser.email,old);
+                await currentUser.reauthenticateWithCredential(cred);
+                await currentUser.updatePassword(newPwd);
+                showAlert('Password changed! Login again.','success');
+                setTimeout(()=>logout(),2000);
+            } catch(e){ showAlert('Error: '+e.message,'error'); }
+        };
+        window.exportAllData = async()=>{
+            showAlert('Data export initiated - check console','info');
+            let collections=['users','companies','attendance','leaves','tasks','vehicles','customers','expenses','notices','holidays'];
+            let allData={};
+            for(let col of collections){
+                let snap=await db.collection(col).get();
+                let data=[]; snap.forEach(d=>data.push({id:d.id,...d.data()}));
+                allData[col]=data;
+            }
+            console.log('EXPORTED DATA:',allData);
+            alert('Data exported to console. Open Developer Tools (F12) to see the data.');
+        };
+
+        // ============ ATTENDANCE ============
+        async function loadAttendancePage() {
+            document.getElementById('page-attendance').innerHTML = `
+                <div class="card"><div class="card-header"><i class="fas fa-camera"></i> Mark Attendance</div>
+                <div id="attStatus" class="alert alert-info"></div>
+                <div class="webcam-box" style="background:#000;border-radius:15px;overflow:hidden;text-align:center;padding:10px;"><video id="webcam" autoplay playsinline style="width:100%;max-width:300px;margin:0 auto;"></video><canvas id="canvas" style="display:none;"></canvas><div id="previewDiv" style="display:none;"><img id="previewImg" style="width:100%;max-width:300px;"><p style="margin-top:10px;">✅ Selfie captured!</p></div></div>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
+                    <button class="btn btn-primary" onclick="startCam()"><i class="fas fa-video"></i> Start Camera</button>
+                    <button class="btn btn-success" onclick="captureSelfie()"><i class="fas fa-camera"></i> Take Selfie</button>
+                    <button class="btn btn-warning" onclick="retakeSelfie()"><i class="fas fa-redo"></i> Retake</button>
+                    <button class="btn btn-info" onclick="getLocation()"><i class="fas fa-map-marker-alt"></i> Get Location</button>
+                </div>
+                <div id="locationMsg" class="alert alert-warning" style="margin-top:15px;">📍 Click "Get Location" to capture GPS</div>
+                <div id="actionBtns" style="margin-top:20px;text-align:center;"></div></div>
+            `;
+            startCam(); await checkTodayStatus();
+        }
+        async function checkTodayStatus() {
+            let today=new Date().toISOString().split('T')[0];
+            let snap=await db.collection('attendance').where('userId','==',currentUser.uid).where('date','==',today).get();
+            let hasActive=false;
+            snap.forEach(d=>{ let data=d.data(); if((data.checkIn&&!data.checkOut)||(data.tripStart&&!data.tripEnd)) hasActive=true; });
+            let btns=document.getElementById('actionBtns');
+            if(hasActive) btns.innerHTML=`<button class="btn btn-danger" onclick="endAction()">Check Out / End Trip</button>`;
+            else btns.innerHTML=`<button class="btn btn-success" onclick="startAction()">Check In / Start Trip</button>`;
+        }
+        window.startCam = async()=>{ if(stream) stream.getTracks().forEach(t=>t.stop()); stream=await navigator.mediaDevices.getUserMedia({video:true}); document.getElementById('webcam').srcObject=stream; };
+        window.captureSelfie = function(){
+            let video=document.getElementById('webcam'), canvas=document.getElementById('canvas');
+            canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+            canvas.getContext('2d').drawImage(video,0,0);
+            currentPhoto=canvas.toDataURL('image/jpeg');
+            document.getElementById('previewDiv').style.display='block';
+            document.getElementById('previewImg').src=currentPhoto;
+            if(stream){ stream.getTracks().forEach(t=>t.stop()); document.getElementById('webcam').style.display='none'; }
+            showAlert('Selfie captured! Now get location.','success');
+        };
+        window.retakeSelfie = function(){ currentPhoto=null; document.getElementById('previewDiv').style.display='none'; document.getElementById('webcam').style.display='block'; startCam(); };
+        window.getLocation = async function(){
+            try{
+                let pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true}));
+                currentLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+                document.getElementById('locationMsg').innerHTML=`📍 Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} ✅ <a href="https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lng}" target="_blank" style="color:#FF6B35;">View on Map</a>`;
+                document.getElementById('locationMsg').className='alert alert-success';
+                showAlert('Location captured!','success');
+            } catch(e){ document.getElementById('locationMsg').innerHTML=`⚠️ Error: ${e.message}`; }
+        };
+        window.startAction = async function(){
+            if(!currentPhoto){ showAlert('Take selfie first!','error'); return; }
+            if(!currentLocation){ showAlert('Get location first!','error'); return; }
+            let today=new Date().toISOString().split('T')[0];
+            await db.collection('attendance').add({userId:currentUser.uid, userName:currentUserData.name, companyId:currentUserCompany, date:today, checkIn:new Date().toISOString(), checkInLocation:currentLocation, checkInPhoto:currentPhoto, status:'active', type:'office'});
+            showAlert('Checked in successfully!','success');
+            resetAfterAction(); await checkTodayStatus();
+        };
+        window.endAction = async function(){
+            if(!currentPhoto){ showAlert('Take selfie first!','error'); return; }
+            if(!currentLocation){ showAlert('Get location first!','error'); return; }
+            let today=new Date().toISOString().split('T')[0];
+            let snap=await db.collection('attendance').where('userId','==',currentUser.uid).where('date','==',today).where('status','==','active').get();
+            if(snap.empty){ showAlert('No active session!','error'); return; }
+            let id=null; snap.forEach(d=>id=d.id);
+            await db.collection('attendance').doc(id).update({checkOut:new Date().toISOString(), checkOutLocation:currentLocation, checkOutPhoto:currentPhoto, status:'completed'});
+            showAlert('Checked out successfully!','success');
+            resetAfterAction(); await checkTodayStatus();
+        };
+        function resetAfterAction(){ currentPhoto=null; document.getElementById('previewDiv').style.display='none'; document.getElementById('webcam').style.display='block'; startCam(); }
+
+        // ============ REPORTS WITH GPS (ENHANCED) ============
+        async function loadReports() {
+            document.getElementById('page-reports').innerHTML = `
+                <div class="card"><div class="card-header"><i class="fas fa-chart-bar"></i> Generate Reports with GPS Location</div>
+                <div class="grid-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+                    <input type="date" id="startDate" class="form-group" style="padding:10px;">
+                    <input type="date" id="endDate" class="form-group" style="padding:10px;">
+                    <input type="text" id="filterName" placeholder="Employee Name" style="padding:10px;">
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-search"></i> Generate</button>
+                        <button class="btn btn-success" onclick="exportReportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="btn btn-danger" onclick="exportReportPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+                <div id="reportResults" style="margin-top:20px;"></div></div>
+            `;
+        }
+        
+        window.generateReport = async function(){
+            let start=document.getElementById('startDate').value, end=document.getElementById('endDate').value, filter=document.getElementById('filterName').value.toLowerCase();
+            if(!start||!end){ showAlert('Select dates','error'); return; }
+            let q=db.collection('attendance').where('date','>=',start).where('date','<=',end);
+            let snap=await q.get();
+            let data=[]; snap.forEach(d=>data.push(d.data()));
+            if(filter) data=data.filter(d=>d.userName?.toLowerCase().includes(filter));
+            
+            // Enhanced data with GPS coordinates
+            let processedData = data.map(record => {
+                let startLat = '-', startLng = '-', endLat = '-', endLng = '-';
+                let startLoc = '-', endLoc = '-';
+                let startMapLink = '#', endMapLink = '#';
+                
+                if(record.checkInLocation) {
+                    startLat = record.checkInLocation.lat?.toFixed(6) || '-';
+                    startLng = record.checkInLocation.lng?.toFixed(6) || '-';
+                    startLoc = `${startLat}, ${startLng}`;
+                    if(startLat !== '-') startMapLink = `https://www.google.com/maps?q=${startLat},${startLng}`;
+                }
+                if(record.startLocation) {
+                    startLat = record.startLocation.lat?.toFixed(6) || '-';
+                    startLng = record.startLocation.lng?.toFixed(6) || '-';
+                    startLoc = `${startLat}, ${startLng}`;
+                    if(startLat !== '-') startMapLink = `https://www.google.com/maps?q=${startLat},${startLng}`;
+                }
+                if(record.checkOutLocation) {
+                    endLat = record.checkOutLocation.lat?.toFixed(6) || '-';
+                    endLng = record.checkOutLocation.lng?.toFixed(6) || '-';
+                    endLoc = `${endLat}, ${endLng}`;
+                    if(endLat !== '-') endMapLink = `https://www.google.com/maps?q=${endLat},${endLng}`;
+                }
+                if(record.endLocation) {
+                    endLat = record.endLocation.lat?.toFixed(6) || '-';
+                    endLng = record.endLocation.lng?.toFixed(6) || '-';
+                    endLoc = `${endLat}, ${endLng}`;
+                    if(endLat !== '-') endMapLink = `https://www.google.com/maps?q=${endLat},${endLng}`;
+                }
+                
+                return {
+                    ...record,
+                    startLat, startLng, endLat, endLng,
+                    startLocationDisplay: startLoc,
+                    endLocationDisplay: endLoc,
+                    startMapLink, endMapLink
+                };
+            });
+            
+            window.reportData = processedData;
+            
+            let html = `<h3 style="margin-bottom:15px;">📊 ${processedData.length} Records Found</h3><div class="table-container"><table style="width:100%;min-width:900px;"><thead><tr><th>Employee</th><th>Date</th><th>Start Time</th><th>End Time</th><th>Start Location (Lat, Lng)</th><th>End Location (Lat, Lng)</th><th>Map</th><th>Photo</th></tr></thead><tbody>`;
+            processedData.forEach(d=>{
+                html+=`<tr>
+                    <td><strong>${d.userName}</strong></td>
+                    <td>${d.date}</td>
+                    <td>${d.checkIn?new Date(d.checkIn).toLocaleTimeString(): (d.tripStart?new Date(d.tripStart).toLocaleTimeString():'-')}</td>
+                    <td>${d.checkOut?new Date(d.checkOut).toLocaleTimeString(): (d.tripEnd?new Date(d.tripEnd).toLocaleTimeString():'-')}</td>
+                    <td><i class="fas fa-map-marker-alt" style="color:#28a745;"></i> ${d.startLocationDisplay}<br><a href="${d.startMapLink}" target="_blank" class="gps-link">View on Google Maps</a></td>
+                    <td><i class="fas fa-map-marker-alt" style="color:#dc3545;"></i> ${d.endLocationDisplay}<br><a href="${d.endMapLink}" target="_blank" class="gps-link">View on Google Maps</a></td>
+                    <td><a href="https://www.google.com/maps?q=${d.startLat},${d.startLng}" target="_blank" class="btn btn-info btn-sm" style="padding:4px 8px;"><i class="fas fa-map"></i> Map</a></td>
+                    <td><img src="${d.checkInPhoto||d.startPhoto}" width="35" height="35" style="border-radius:50%;cursor:pointer;object-fit:cover;" onclick="window.open(this.src)"></td>
+                </tr>`;
+            });
+            html+=`</tbody></table></div>`;
+            document.getElementById('reportResults').innerHTML = html;
+        };
+        
+        window.exportReportExcel = function(){
+            if(!window.reportData?.length){ showAlert('Generate report first','error'); return; }
+            let data = window.reportData.map(r => ({
+                'Employee Name': r.userName,
+                'Date': r.date,
+                'Start Time': r.checkIn ? new Date(r.checkIn).toLocaleString() : (r.tripStart ? new Date(r.tripStart).toLocaleString() : '-'),
+                'End Time': r.checkOut ? new Date(r.checkOut).toLocaleString() : (r.tripEnd ? new Date(r.tripEnd).toLocaleString() : '-'),
+                'Start Latitude': r.startLat,
+                'Start Longitude': r.startLng,
+                'End Latitude': r.endLat,
+                'End Longitude': r.endLng,
+                'Google Maps Start': r.startMapLink !== '#' ? r.startMapLink : '-',
+                'Google Maps End': r.endMapLink !== '#' ? r.endMapLink : '-'
+            }));
+            let ws = XLSX.utils.json_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
+            XLSX.writeFile(wb, `SPEEDEL_Attendance_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showAlert('Excel report with GPS coordinates downloaded!', 'success');
+        };
+        
+        window.exportReportPDF = function(){
+            if(!window.reportData?.length){ showAlert('Generate report first','error'); return; }
+            let { jsPDF } = window.jspdf;
+            let doc = new jsPDF('landscape');
+            doc.text('SPEEDEL EXPRESS - Attendance Report with GPS Locations', 14, 10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 20);
+            let tableData = window.reportData.map(r => [
+                r.userName, r.date,
+                r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : (r.tripStart ? new Date(r.tripStart).toLocaleTimeString() : '-'),
+                r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : (r.tripEnd ? new Date(r.tripEnd).toLocaleTimeString() : '-'),
+                `${r.startLat}, ${r.startLng}`,
+                `${r.endLat}, ${r.endLng}`
+            ]);
+            doc.autoTable({
+                head: [['Name', 'Date', 'Start Time', 'End Time', 'Start Location', 'End Location']],
+                body: tableData,
+                startY: 30,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [255, 107, 53] }
+            });
+            doc.save(`SPEEDEL_Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+            showAlert('PDF report with GPS coordinates downloaded!', 'success');
+        };
+
+        window.logout = async()=>{ await auth.signOut(); if(stream) stream.getTracks().forEach(t=>t.stop()); renderLogin(); };
+
+        // Auth State Listener
+        auth.onAuthStateChanged(async(user)=>{
+            currentUser = user;
+            if(!user){ renderLogin(); return; }
+            if(user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+                await ensureAdminInFirestore(user);
+                currentUserRole = 'admin';
+                currentUserData = { name: 'Super Admin', role: 'admin', email: user.email, salary: 50000 };
+                renderMainLayout();
+                return;
+            }
+            let snap = await db.collection('users').where('uid','==',user.uid).get();
+            if(!snap.empty){ 
+                snap.forEach(d=>{ currentUserData = d.data(); currentUserRole = currentUserData.role; currentUserCompany = currentUserData.companyId; }); 
+                renderMainLayout(); 
+            } else { 
+                showAlert('User role not found. Contact admin.', 'error');
+                renderLogin(); 
+            }
+        });
+    </script>
+</body>
+</html>
