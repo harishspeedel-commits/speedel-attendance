@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>SPEEDEL EXPRESS - Attendance System</title>
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,10 +15,10 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f4f8; }
-        
+
         .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
         .menu-btn, .theme-toggle { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 20px; cursor: pointer; padding: 8px 12px; border-radius: 10px; }
-        
+
         .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; box-shadow: 2px 0 20px rgba(0,0,0,0.2); z-index: 2000; transition: left 0.3s ease; overflow-y: auto; }
         .sidebar.open { left: 0; }
         .sidebar-header { padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; }
@@ -27,18 +27,18 @@
         .sidebar-item i { width: 24px; color: #667eea; }
         .sidebar-item.logout { margin-top: 20px; border-top: 1px solid #eee; color: #dc3545; }
         .sidebar-item.logout i { color: #dc3545; }
-        
+
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
         .overlay.show { display: block; }
-        
+
         .main-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         .page { display: none; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+
         .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
         .card-header { font-size: 18px; font-weight: 700; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        
+
         .btn { padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .btn-success { background: #28a745; color: white; }
@@ -47,156 +47,55 @@
         .btn-info { background: #17a2b8; color: white; }
         .btn-sm { padding: 6px 12px; font-size: 12px; }
         .btn-block { width: 100%; justify-content: center; }
-        
+
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 20px; color: white; text-align: center; cursor: pointer; transition: transform 0.3s; }
         .stat-card:hover { transform: translateY(-5px); }
         .stat-number { font-size: 32px; font-weight: 800; }
         .stat-label { font-size: 12px; opacity: 0.9; }
-        
-        /* TABLE STYLES - FIXED */
-        .table-wrapper {
-            overflow-x: auto;
-            width: 100%;
-            border-radius: 12px;
-            border: 1px solid #e0e0e0;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            min-width: 600px;
-        }
-        .data-table th {
-            background: #667eea;
-            color: white;
-            padding: 12px 15px;
-            text-align: left;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .data-table td {
-            padding: 10px 15px;
-            border-bottom: 1px solid #e0e0e0;
-            vertical-align: middle;
-            word-break: break-word;
-        }
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-        .data-table tr:hover {
-            background: #f5f5f5;
-        }
-        
-        /* Report Filters */
-        .report-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-        .filter-group {
-            flex: 1;
-            min-width: 150px;
-        }
-        .filter-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #555;
-        }
-        .filter-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 13px;
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        input, select { 
-            width: 100%; 
-            padding: 10px 12px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 10px; 
-            font-size: 14px; 
-        }
+
+        .table-wrapper { overflow-x: auto; width: 100%; border-radius: 12px; border: 1px solid #e0e0e0; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        .data-table th { background: #667eea; color: white; padding: 12px 15px; text-align: left; font-weight: 600; white-space: nowrap; }
+        .data-table td { padding: 10px 15px; border-bottom: 1px solid #e0e0e0; vertical-align: middle; word-break: break-word; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover { background: #f5f5f5; }
+
+        .report-filters { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; }
+        .filter-group { flex: 1; min-width: 150px; }
+        .filter-group label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600; color: #555; }
+        .filter-group input, .filter-group select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        input, select { width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 14px; }
         input:focus, select:focus { border-color: #667eea; outline: none; }
-        
+
         .alert { padding: 12px 15px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
         .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
         .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
         .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
         .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
-        
+
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge-admin { background: #e94560; color: white; }
         .badge-manager { background: #17a2b8; color: white; }
         .badge-employee { background: #6c757d; color: white; }
         .badge-success { background: #28a745; color: white; }
         .badge-danger { background: #dc3545; color: white; }
-        
+
         .webcam-box { background: #1a1a2e; border-radius: 20px; overflow: hidden; text-align: center; padding: 15px; margin-bottom: 15px; }
         video, #previewImg { width: 100%; max-width: 300px; border-radius: 15px; margin: 0 auto; display: block; }
         .photo-preview { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; cursor: pointer; }
-        
-        .coord-code {
-            font-family: monospace;
-            font-size: 11px;
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-        }
-        
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 10000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            width: 90%;
-            max-width: 400px;
-        }
-        .modal-content h3 {
-            margin-bottom: 20px;
-        }
-        .modal-content input, .modal-content select {
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .modal-buttons button {
-            flex: 1;
-        }
-        
+
+        .coord-code { font-family: monospace; font-size: 11px; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; }
+        .modal-content h3 { margin-bottom: 20px; }
+        .modal-content input, .modal-content select { width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-buttons button { flex: 1; }
+
         @media (max-width: 768px) {
             .btn { width: 100%; justify-content: center; margin: 5px 0; }
             .card { padding: 15px; }
@@ -210,984 +109,512 @@
     </style>
 </head>
 <body>
-    <div id="app"></div>
+<div id="app"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDWXXso720Qo8Q5A-nHge6DtoamYzLn97Q",
-            authDomain: "speedel-attendance.firebaseapp.com",
-            projectId: "speedel-attendance",
-            storageBucket: "speedel-attendance.firebasestorage.app",
-            messagingSenderId: "693149953722",
-            appId: "1:693149953722:web:1bc91ae862fd46778bdc83"
-        };
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDWXXso720Qo8Q5A-nHge6DtoamYzLn97Q",
+        authDomain: "speedel-attendance.firebaseapp.com",
+        projectId: "speedel-attendance",
+        storageBucket: "speedel-attendance.firebasestorage.app",
+        messagingSenderId: "693149953722",
+        appId: "1:693149953722:web:1bc91ae862fd46778bdc83"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        let currentUser = null;
-        let currentUserRole = null;
-        let currentUserCompany = null;
-        let currentUserData = null;
-        let currentPhoto = null;
-        let stream = null;
-        let currentLocation = null;
-        let activeSessionId = null;
-        
-        const SUPER_ADMIN_EMAIL = "Harishspeedel@gmail.com";
-        let isDarkMode = false;
+    let currentUser = null;
+    let currentUserRole = null;
+    let currentUserCompany = null;
+    let currentUserData = null;
+    let currentPhoto = null;
+    let stream = null;
+    let currentLocation = null;
+    let activeSessionId = null;
 
-        function showAlert(msg, type) {
-            const container = document.getElementById('alertContainer');
-            if (!container) return;
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
-            container.appendChild(alert);
-            setTimeout(() => alert.remove(), 4000);
-        }
+    const SUPER_ADMIN_EMAIL = "Harishspeedel@gmail.com";
+    let isDarkMode = false;
 
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            document.body.style.background = isDarkMode ? '#1a1a2e' : '#f0f4f8';
-            document.querySelectorAll('.card').forEach(c => {
-                c.style.background = isDarkMode ? '#16213e' : 'white';
-                c.style.color = isDarkMode ? '#e0e0e0' : '#333';
-            });
-        }
+    function showAlert(msg, type) {
+        const container = document.getElementById('alertContainer');
+        if (!container) return;
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+        container.appendChild(alert);
+        setTimeout(() => alert.remove(), 4000);
+    }
 
-        function toggleSidebar() {
-            document.getElementById('sidebar')?.classList.toggle('open');
-            document.getElementById('overlay')?.classList.toggle('show');
-        }
-        
-        function closeSidebar() {
-            document.getElementById('sidebar')?.classList.remove('open');
-            document.getElementById('overlay')?.classList.remove('show');
-        }
-        
-        function navigateTo(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(`page-${page}`)?.classList.add('active');
-            closeSidebar();
-        }
+    function toggleTheme() {
+        isDarkMode = !isDarkMode;
+        document.body.style.background = isDarkMode ? '#1a1a2e' : '#f0f4f8';
+        document.querySelectorAll('.card').forEach(c => {
+            c.style.background = isDarkMode ? '#16213e' : 'white';
+            c.style.color = isDarkMode ? '#e0e0e0' : '#333';
+        });
+    }
 
-        // ============ LOGIN PAGE ============
-        function renderLogin() {
-            document.getElementById('app').innerHTML = `
-                <div style="min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:20px;">
-                    <div class="card" style="max-width:400px;width:100%;">
-                        <div style="text-align:center;margin-bottom:25px;">
-                            <h2 style="color:#667eea;">SPEEDEL EXPRESS</h2>
-                            <p style="color:#666;">Attendance System</p>
-                        </div>
-                        <form id="loginForm">
-                            <input type="email" id="email" placeholder="Email" required>
-                            <input type="password" id="password" placeholder="Password" required>
-                            <button type="submit" class="btn btn-primary btn-block">Login</button>
-                        </form>
-                        <div id="alertContainer" style="margin-top:15px;"></div>
+    function toggleSidebar() { document.getElementById('sidebar')?.classList.toggle('open'); document.getElementById('overlay')?.classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar')?.classList.remove('open'); document.getElementById('overlay')?.classList.remove('show'); }
+
+    function navigateTo(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${page}`)?.classList.add('active');
+        closeSidebar();
+    }
+
+    // ============ LOGIN PAGE ============
+    function renderLogin() {
+        document.getElementById('app').innerHTML = `
+            <div style="min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:20px;">
+                <div class="card" style="max-width:400px;width:100%;">
+                    <div style="text-align:center;margin-bottom:25px;">
+                        <h2 style="color:#667eea;">SPEEDEL EXPRESS</h2>
+                        <p style="color:#666;">Attendance System</p>
                     </div>
+                    <form id="loginForm">
+                        <input type="email" id="email" placeholder="Email" required>
+                        <input type="password" id="password" placeholder="Password" required>
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </form>
+                    <div id="alertContainer" style="margin-top:15px;"></div>
                 </div>
-            `;
-            
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                try {
-                    await auth.signInWithEmailAndPassword(email, password);
-                    showAlert('Login successful!', 'success');
-                } catch(error) {
-                    showAlert('Login failed: ' + error.message, 'error');
+            </div>
+        `;
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try { await auth.signInWithEmailAndPassword(email, password); showAlert('Login successful!', 'success'); } 
+            catch(error) { showAlert('Login failed: ' + error.message, 'error'); }
+        });
+    }
+
+    function renderLoading() {
+        document.getElementById('app').innerHTML = `<div style="min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><div class="card" style="text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:40px;color:#667eea;"></i><p style="margin-top:15px;">Loading dashboard...</p></div></div>`;
+    }
+
+    // ============ MAIN LAYOUT ============
+    function renderMainLayout() {
+        const isSuperAdmin = currentUserRole === 'super_admin';
+        const isCompanyAdmin = currentUserRole === 'company_admin';
+        const menuItems = `
+            <div class="sidebar-header"><h3>SPEEDEL Express</h3><small>${isSuperAdmin ? 'Super Admin' : (isCompanyAdmin ? 'Company Admin' : 'Employee')}</small></div>
+            <div class="sidebar-item" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Dashboard</div>
+            ${isSuperAdmin ? `<div class="sidebar-item" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</div>` : ''}
+            ${isSuperAdmin ? `<div class="sidebar-item" onclick="navigateTo('users')"><i class="fas fa-users"></i> All Users</div>` : ''}
+            ${isCompanyAdmin ? `<div class="sidebar-item" onclick="navigateTo('myusers')"><i class="fas fa-users"></i> My Team</div>` : ''}
+            <div class="sidebar-item" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</div>
+            <div class="sidebar-item" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</div>
+            <div class="sidebar-item logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        `;
+        document.getElementById('app').innerHTML = `
+            <div class="navbar"><button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button><h3 style="color:white;">SPEEDEL Express</h3><button class="theme-toggle" onclick="toggleTheme()"><i class="fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i></button></div>
+            <div id="sidebar" class="sidebar">${menuItems}</div><div id="overlay" class="overlay" onclick="closeSidebar()"></div>
+            <div class="main-container"><div id="alertContainer"></div>
+            <div id="page-dashboard" class="page active"></div>
+            <div id="page-companies" class="page"></div><div id="page-users" class="page"></div>
+            <div id="page-myusers" class="page"></div><div id="page-attendance" class="page"></div>
+            <div id="page-reports" class="page"></div></div>
+        `;
+        loadDashboard();
+        if (isSuperAdmin) { loadCompanies(); loadAllUsers(); }
+        if (isCompanyAdmin) { loadMyTeam(); }
+        loadAttendancePage();
+        loadReports();
+    }
+
+    // ============ DASHBOARD ============
+    async function loadDashboard() {
+        let totalEmp = 0, totalCompanies = 0, todayPresent = 0, companyName = '';
+        try {
+            if (currentUserRole === 'super_admin') {
+                const users = await db.collection('users').get();
+                totalEmp = users.size;
+                const companies = await db.collection('companies').get();
+                totalCompanies = companies.size;
+                const today = new Date().toISOString().split('T')[0];
+                const attendance = await db.collection('attendance').where('date', '==', today).get();
+                todayPresent = attendance.size;
+            } else if (currentUserRole === 'company_admin') {
+                if (currentUserCompany) {
+                    const companyDoc = await db.collection('companies').doc(currentUserCompany).get();
+                    companyName = companyDoc.exists ? companyDoc.data().name : 'Your Company';
                 }
-            });
-        }
+                const users = await db.collection('users').where('companyId', '==', currentUserCompany).get();
+                totalEmp = users.size;
+                const today = new Date().toISOString().split('T')[0];
+                const attendance = await db.collection('attendance').where('companyId', '==', currentUserCompany).where('date', '==', today).get();
+                todayPresent = attendance.size;
+            } else {
+                const today = new Date().toISOString().split('T')[0];
+                const attendance = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
+                todayPresent = attendance.size > 0 ? 1 : 0;
+            }
+        } catch(e) { console.error(e); }
+        document.getElementById('page-dashboard').innerHTML = `
+            <div class="grid-4">
+                <div class="stat-card"><div class="stat-number">${totalEmp || 0}</div><div class="stat-label">Employees</div></div>
+                ${currentUserRole === 'super_admin' ? `<div class="stat-card"><div class="stat-number">${totalCompanies}</div><div class="stat-label">Companies</div></div>` : ''}
+                <div class="stat-card"><div class="stat-number">${todayPresent}</div><div class="stat-label">Present Today</div></div>
+            </div>
+            <div class="card"><div class="card-header">Welcome, ${currentUserData?.name || 'User'}</div>
+            <p><strong>Role:</strong> ${currentUserRole === 'super_admin' ? 'Super Administrator' : (currentUserRole === 'company_admin' ? `Company Administrator - ${companyName}` : 'Employee')}</p>
+            <p><strong>Email:</strong> ${currentUser?.email}</p>
+            ${currentUserRole === 'company_admin' && currentUserCompany ? `<p><strong>Company ID:</strong> ${currentUserCompany}</p>` : ''}</div>
+        `;
+    }
 
-        function renderLoading() {
-            document.getElementById('app').innerHTML = `
-                <div style="min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <div class="card" style="text-align:center;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 40px; color: #667eea;"></i>
-                        <p style="margin-top:15px;">Loading dashboard...</p>
-                    </div>
-                </div>
-            `;
+    // ============ COMPANIES (Super Admin Only) ============
+    async function loadCompanies() {
+        const snap = await db.collection('companies').get();
+        let html = `<div class="card"><div class="card-header">🏢 Companies <button class="btn btn-primary btn-sm" onclick="addCompany()">+ Add Company</button></div><div class="table-wrapper"><table class="data-table"><thead><tr><th>Name</th><th>Address</th><th>Phone</th><th>Company Admin</th><th>Actions</th></tr></thead><tbody>`;
+        for (const doc of snap.docs) {
+            const c = doc.data();
+            const adminSnap = await db.collection('users').where('companyId', '==', doc.id).where('role', '==', 'company_admin').get();
+            const adminName = adminSnap.empty ? 'Not assigned' : adminSnap.docs[0].data().name;
+            html += `<tr><td style="white-space:normal;"><strong>${c.name}</strong></td><td style="white-space:normal;">${c.address || '-'}</td><td style="white-space:normal;">${c.phone || '-'}</td><td style="white-space:normal;">${adminName}</td><td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editCompany('${doc.id}','${c.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCompany('${doc.id}')">Delete</button></td></tr>`;
         }
+        html += `</tbody></table></div></div>`;
+        document.getElementById('page-companies').innerHTML = html;
+    }
 
-        // ============ MAIN LAYOUT ============
-        function renderMainLayout() {
-            const isSuperAdmin = currentUserRole === 'super_admin';
-            const isCompanyAdmin = currentUserRole === 'company_admin';
-            
-            const menuItems = `
-                <div class="sidebar-header">
-                    <h3>SPEEDEL Express</h3>
-                    <small>${isSuperAdmin ? 'Super Admin' : (isCompanyAdmin ? 'Company Admin' : 'Employee')}</small>
-                </div>
-                <div class="sidebar-item" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Dashboard</div>
-                ${isSuperAdmin ? `<div class="sidebar-item" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</div>` : ''}
-                ${isSuperAdmin ? `<div class="sidebar-item" onclick="navigateTo('users')"><i class="fas fa-users"></i> All Users</div>` : ''}
-                ${isCompanyAdmin ? `<div class="sidebar-item" onclick="navigateTo('myusers')"><i class="fas fa-users"></i> My Team</div>` : ''}
-                <div class="sidebar-item" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</div>
-                <div class="sidebar-item" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</div>
-                <div class="sidebar-item logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
-            `;
-            
-            document.getElementById('app').innerHTML = `
-                <div class="navbar">
-                    <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                    <h3 style="color:white;">SPEEDEL Express</h3>
-                    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i></button>
-                </div>
-                <div id="sidebar" class="sidebar">${menuItems}</div>
-                <div id="overlay" class="overlay" onclick="closeSidebar()"></div>
-                <div class="main-container">
-                    <div id="alertContainer"></div>
-                    <div id="page-dashboard" class="page active"></div>
-                    <div id="page-companies" class="page"></div>
-                    <div id="page-users" class="page"></div>
-                    <div id="page-myusers" class="page"></div>
-                    <div id="page-attendance" class="page"></div>
-                    <div id="page-reports" class="page"></div>
-                </div>
-            `;
-            
-            loadDashboard();
-            if (isSuperAdmin) { loadCompanies(); loadAllUsers(); }
-            if (isCompanyAdmin) { loadMyTeam(); }
-            loadAttendancePage();
-            loadReports();
+    window.addCompany = async () => { const name = prompt('Company Name:'); if (!name) return; const address = prompt('Address:'); const phone = prompt('Phone:'); await db.collection('companies').add({ name, address, phone, createdAt: new Date() }); showAlert('Company created!', 'success'); loadCompanies(); };
+    window.editCompany = async (id, name) => { const newName = prompt('New name:', name); if (newName) await db.collection('companies').doc(id).update({ name: newName }); loadCompanies(); };
+    window.deleteCompany = async (id) => { if (confirm('Delete this company?')) { await db.collection('companies').doc(id).delete(); showAlert('Company deleted', 'success'); loadCompanies(); } };
+
+    // ============ ALL USERS (Super Admin Only) ============
+    async function loadAllUsers() {
+        const companiesSnap = await db.collection('companies').get();
+        const companies = {};
+        companiesSnap.forEach(doc => { companies[doc.id] = doc.data().name; });
+        const usersSnap = await db.collection('users').get();
+        let html = `<div class="card"><div class="card-header">👥 All Users <button class="btn btn-primary btn-sm" onclick="showAddUserModal()">+ Add User</button></div><div class="table-wrapper"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Company</th><th>Actions</th></tr></thead><tbody>`;
+        for (const doc of usersSnap.docs) {
+            const u = doc.data();
+            const isSuperAdmin = u.email === SUPER_ADMIN_EMAIL;
+            let roleBadge = u.role === 'super_admin' ? '<span class="badge-admin">Super Admin</span>' : (u.role === 'company_admin' ? '<span class="badge-manager">Company Admin</span>' : '<span class="badge-employee">Employee</span>');
+            html += `<tr><td style="white-space:normal;">${u.name} ${isSuperAdmin ? '👑' : ''}</td><td style="white-space:normal;">${u.email}</td><td style="white-space:nowrap;">${roleBadge}</td><td style="white-space:normal;">${companies[u.companyId] || '-'}</td><td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editUser('${u.uid}','${u.name}','${u.role}','${u.companyId}')">Edit</button> <button class="btn btn-info btn-sm" onclick="resetUserPwd('${u.email}')">Reset</button> ${!isSuperAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.uid}')">Delete</button>` : ''}</td></tr>`;
         }
+        html += `</tbody></table></div></div>`;
+        document.getElementById('page-users').innerHTML = html;
+    }
 
-        // ============ DASHBOARD ============
-        async function loadDashboard() {
-            let totalEmp = 0, totalCompanies = 0, todayPresent = 0;
+    function showAddUserModal() {
+        db.collection('companies').get().then(snap => {
+            let companyOptions = '<option value="">None (for employees)</option>';
+            snap.forEach(doc => { companyOptions += `<option value="${doc.id}">${doc.data().name}</option>`; });
+            const modalHtml = `<div id="addUserModal" class="modal-overlay"><div class="modal-content"><h3>Add New User</h3><input type="text" id="newUserName" placeholder="Full Name"><input type="email" id="newUserEmail" placeholder="Email"><input type="password" id="newUserPassword" placeholder="Password (min 6 chars)"><select id="newUserRole"><option value="employee">Employee</option><option value="company_admin">Company Admin</option></select><select id="newUserCompany">${companyOptions}</select><div class="modal-buttons"><button onclick="saveNewUser()" class="btn btn-primary">Create</button><button onclick="closeAddUserModal()" class="btn btn-secondary" style="background:#6c757d;color:white;">Cancel</button></div></div></div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        });
+    }
+
+    window.closeAddUserModal = function() { document.getElementById('addUserModal')?.remove(); };
+    window.saveNewUser = async function() {
+        const name = document.getElementById('newUserName')?.value;
+        const email = document.getElementById('newUserEmail')?.value;
+        const password = document.getElementById('newUserPassword')?.value;
+        const role = document.getElementById('newUserRole')?.value;
+        const companyId = document.getElementById('newUserCompany')?.value;
+        if (!name || !email || !password) { showAlert('Please fill all fields', 'error'); return; }
+        if (password.length < 6) { showAlert('Password must be at least 6 characters', 'error'); return; }
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await db.collection('users').add({ uid: userCredential.user.uid, name, email, role, companyId: role === 'company_admin' ? companyId : '', createdAt: new Date() });
+            showAlert(`User ${name} created successfully!`, 'success');
+            closeAddUserModal();
+            loadAllUsers();
+        } catch(error) { showAlert('Error: ' + error.message, 'error'); }
+    };
+
+    window.editUser = async (uid, name, role, companyId) => {
+        const newName = prompt('New name:', name);
+        const newRole = prompt('New role (company_admin/employee):', role);
+        let newCompany = companyId;
+        if (newRole === 'company_admin') {
+            const companies = await db.collection('companies').get();
+            if (!companies.empty) {
+                const companyList = []; companies.forEach(doc => companyList.push({ id: doc.id, name: doc.data().name }));
+                const companyNames = companyList.map(c => c.name).join('\n');
+                const selectedCompany = prompt(`Select company:\n${companyNames}\n\nEnter Company Name:`);
+                if (selectedCompany) { const found = companyList.find(c => c.name === selectedCompany); if (found) newCompany = found.id; }
+            }
+        } else { newCompany = ''; }
+        const snap = await db.collection('users').where('uid', '==', uid).get();
+        snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).update({ name: newName, role: newRole, companyId: newCompany }); });
+        showAlert('User updated', 'success');
+        loadAllUsers();
+    };
+
+    window.deleteUser = async (uid) => { if (confirm('Delete this user?')) { const snap = await db.collection('users').where('uid', '==', uid).get(); snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).delete(); }); showAlert('User deleted', 'success'); loadAllUsers(); } };
+    window.resetUserPwd = (email) => { auth.sendPasswordResetEmail(email); showAlert(`Reset email sent to ${email}`, 'success'); };
+
+    // ============ MY TEAM (Company Admin Only) ============
+    async function loadMyTeam() {
+        if (!currentUserCompany) {
+            document.getElementById('page-myusers').innerHTML = '<div class="card"><div class="alert alert-error">No company assigned to your account. Please contact Super Admin.</div></div>';
+            return;
+        }
+        const usersSnap = await db.collection('users').where('companyId', '==', currentUserCompany).get();
+        let html = `<div class="card"><div class="card-header">👥 My Team <button class="btn btn-primary btn-sm" onclick="addTeamMember()">+ Add Member</button></div><div class="table-wrapper"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+        for (const doc of usersSnap.docs) {
+            const u = doc.data();
+            if (u.uid !== currentUser?.uid) {
+                const today = new Date().toISOString().split('T')[0];
+                const attSnap = await db.collection('attendance').where('userId', '==', u.uid).where('date', '==', today).get();
+                let status = 'Absent', statusClass = 'badge-danger';
+                attSnap.forEach(a => { if (a.data().checkIn) { status = 'Present'; statusClass = 'badge-success'; } });
+                html += `<tr><td style="white-space:normal;">${u.name}</td><td style="white-space:normal;">${u.email}</td><td style="white-space:normal;">${u.role}</td><td style="white-space:nowrap;"><span class="badge ${statusClass}">${status}</span></td><td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editTeamMember('${u.uid}','${u.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeamMember('${u.uid}')">Delete</button></td></tr>`;
+            }
+        }
+        html += `</tbody></table></div></div>`;
+        document.getElementById('page-myusers').innerHTML = html;
+    }
+
+    window.addTeamMember = async () => {
+        const name = prompt('Name:'); const email = prompt('Email:'); const password = prompt('Password (min 6 chars):');
+        if (name && email && password && password.length >= 6) {
             try {
-                if (currentUserRole === 'super_admin') {
-                    const users = await db.collection('users').get();
-                    totalEmp = users.size;
-                    const companies = await db.collection('companies').get();
-                    totalCompanies = companies.size;
-                    const today = new Date().toISOString().split('T')[0];
-                    const attendance = await db.collection('attendance').where('date', '==', today).get();
-                    todayPresent = attendance.size;
-                } else if (currentUserRole === 'company_admin') {
-                    const users = await db.collection('users').where('companyId', '==', currentUserCompany).get();
-                    totalEmp = users.size;
-                    const today = new Date().toISOString().split('T')[0];
-                    const attendance = await db.collection('attendance').where('companyId', '==', currentUserCompany).where('date', '==', today).get();
-                    todayPresent = attendance.size;
-                } else {
-                    const today = new Date().toISOString().split('T')[0];
-                    const attendance = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
-                    todayPresent = attendance.size > 0 ? 1 : 0;
+                const cred = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').add({ uid: cred.user.uid, name, email, role: 'employee', companyId: currentUserCompany, createdAt: new Date() });
+                showAlert(`Employee ${name} added!`, 'success');
+                loadMyTeam();
+                if (currentUserRole === 'super_admin') loadAllUsers();
+            } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+        } else { showAlert('Password must be at least 6 characters', 'error'); }
+    };
+
+    window.editTeamMember = async (uid, name) => { const newName = prompt('New name:', name); const snap = await db.collection('users').where('uid', '==', uid).get(); snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).update({ name: newName }); }); showAlert('Employee updated', 'success'); loadMyTeam(); };
+    window.deleteTeamMember = async (uid) => { if (confirm('Remove this employee?')) { const snap = await db.collection('users').where('uid', '==', uid).get(); snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).delete(); }); showAlert('Employee removed', 'success'); loadMyTeam(); } };
+
+    // ============ ATTENDANCE PAGE ============
+    async function loadAttendancePage() {
+        document.getElementById('page-attendance').innerHTML = `
+            <div class="card"><div class="card-header"><i class="fas fa-camera"></i> Mark Attendance</div>
+            <div id="attStatus" class="alert alert-info">📌 Take selfie & capture GPS</div>
+            <div class="webcam-box"><video id="webcam" autoplay playsinline style="width:100%;max-width:300px;"></video><canvas id="canvas" style="display:none;"></canvas><div id="previewDiv" style="display:none;"><img id="previewImg"><p style="margin-top:10px;color:#28a745;">✅ Selfie captured!</p></div></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0;"><button class="btn btn-primary" onclick="startCamera()"><i class="fas fa-video"></i> Start Camera</button><button class="btn btn-success" onclick="capturePhoto()"><i class="fas fa-camera"></i> Take Selfie</button><button class="btn btn-warning" onclick="retakePhoto()"><i class="fas fa-redo"></i> Retake</button><button class="btn btn-info" onclick="getGPSLocation()"><i class="fas fa-map-marker-alt"></i> Get GPS</button></div>
+            <div id="locationBox" class="alert alert-warning">📍 Click "Get GPS" to capture location</div>
+            <div id="actionArea" style="text-align:center;margin-top:15px;"></div></div>
+            <div class="card"><div class="card-header"><i class="fas fa-history"></i> History</div><div id="historyList">Loading...</div></div>
+        `;
+        startCamera();
+        await checkCurrentStatus();
+        await loadHistory();
+    }
+
+    async function checkCurrentStatus() {
+        const today = new Date().toISOString().split('T')[0];
+        const existing = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
+        let activeSession = null;
+        existing.forEach(doc => { const data = doc.data(); if (data.checkIn && !data.checkOut) { activeSession = { id: doc.id, ...data }; activeSessionId = doc.id; } });
+        const actionArea = document.getElementById('actionArea');
+        const statusDiv = document.getElementById('attStatus');
+        if (activeSession) {
+            actionArea.innerHTML = `<button class="btn btn-danger btn-block" onclick="checkOut()" id="checkOutBtn"><i class="fas fa-sign-out-alt"></i> CHECK OUT</button>`;
+            statusDiv.innerHTML = `<div class="alert alert-info">✅ Checked in at ${new Date(activeSession.checkIn).toLocaleTimeString()}. Click CHECK OUT when leaving.</div>`;
+        } else {
+            actionArea.innerHTML = `<button class="btn btn-success btn-block" onclick="checkIn()" id="checkInBtn"><i class="fas fa-sign-in-alt"></i> CHECK IN</button>`;
+            statusDiv.innerHTML = `<div class="alert alert-warning">📌 Not checked in. Take selfie, get GPS, then click CHECK IN.</div>`;
+            activeSessionId = null;
+        }
+    }
+
+    window.startCamera = async () => { try { if (stream) stream.getTracks().forEach(t => t.stop()); stream = await navigator.mediaDevices.getUserMedia({ video: true }); document.getElementById('webcam').srcObject = stream; } catch(e) { showAlert('Camera error: ' + e.message, 'error'); } };
+    window.capturePhoto = function() { const video = document.getElementById('webcam'); const canvas = document.getElementById('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); currentPhoto = canvas.toDataURL('image/jpeg'); document.getElementById('previewDiv').style.display = 'block'; document.getElementById('previewImg').src = currentPhoto; document.getElementById('webcam').style.display = 'none'; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } showAlert('✅ Selfie captured! Now get GPS.', 'success'); checkReadyStatus(); };
+    window.retakePhoto = function() { currentPhoto = null; document.getElementById('previewDiv').style.display = 'none'; document.getElementById('webcam').style.display = 'block'; startCamera(); checkReadyStatus(); };
+    window.getGPSLocation = async function() { try { showAlert('Getting GPS...', 'info'); const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000 })); currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; const mapsLink = `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lng}`; document.getElementById('locationBox').innerHTML = `📍 GPS: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} ✅ <a href="${mapsLink}" target="_blank">View Map</a>`; document.getElementById('locationBox').className = 'alert alert-success'; showAlert('✅ GPS captured!', 'success'); checkReadyStatus(); } catch(e) { document.getElementById('locationBox').innerHTML = `⚠️ GPS Error: ${e.message}`; document.getElementById('locationBox').className = 'alert alert-error'; } };
+
+    function checkReadyStatus() { const checkInBtn = document.getElementById('checkInBtn'); if (checkInBtn) { if (currentPhoto && currentLocation) { checkInBtn.disabled = false; checkInBtn.innerHTML = '<i class="fas fa-check-circle"></i> ✅ READY - CHECK IN'; } else { checkInBtn.disabled = true; if (!currentPhoto && !currentLocation) checkInBtn.innerHTML = '<i class="fas fa-camera"></i> Take Selfie & Get GPS'; else if (!currentPhoto) checkInBtn.innerHTML = '<i class="fas fa-camera"></i> Take Selfie First'; else if (!currentLocation) checkInBtn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Get GPS First'; } } }
+
+    window.checkIn = async function() {
+        if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+        if (!currentLocation) { showAlert('Get GPS first!', 'error'); return; }
+        const btn = document.getElementById('checkInBtn'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        try {
+            const today = new Date().toISOString().split('T')[0]; const now = new Date().toISOString();
+            const existing = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
+            let hasActive = false; existing.forEach(doc => { if (doc.data().checkIn && !doc.data().checkOut) hasActive = true; });
+            if (hasActive) { showAlert('You are already checked in today!', 'warning'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> CHECK IN'; return; }
+            await db.collection('attendance').add({ userId: currentUser.uid, userName: currentUserData?.name || currentUser.email, userEmail: currentUser.email, companyId: currentUserCompany || '', date: today, checkIn: now, checkInLocation: currentLocation, checkInPhoto: currentPhoto, status: 'checked_in' });
+            showAlert('✅ Checked IN successfully!', 'success');
+            currentPhoto = null; currentLocation = null; document.getElementById('previewDiv').style.display = 'none'; document.getElementById('webcam').style.display = 'block'; startCamera(); document.getElementById('locationBox').innerHTML = '📍 Click "Get GPS" to capture location'; document.getElementById('locationBox').className = 'alert alert-warning';
+            await checkCurrentStatus(); await loadHistory();
+        } catch(error) { showAlert('Error: ' + error.message, 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> RETRY CHECK IN'; }
+    };
+
+    window.checkOut = async function() {
+        if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
+        if (!currentLocation) { showAlert('Get GPS first!', 'error'); return; }
+        const btn = document.getElementById('checkOutBtn'); if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
+        try {
+            const today = new Date().toISOString().split('T')[0]; const now = new Date().toISOString();
+            let sessionDoc = null;
+            if (activeSessionId) { const docRef = db.collection('attendance').doc(activeSessionId); const docSnap = await docRef.get(); if (docSnap.exists && docSnap.data().checkIn && !docSnap.data().checkOut) { sessionDoc = { id: activeSessionId, ...docSnap.data() }; } }
+            if (!sessionDoc) { const querySnapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).where('checkOut', '==', null).get(); if (!querySnapshot.empty) { sessionDoc = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() }; activeSessionId = sessionDoc.id; } }
+            if (!sessionDoc) { showAlert('No active check-in session found!', 'error'); if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> CHECK OUT'; } return; }
+            await db.collection('attendance').doc(sessionDoc.id).update({ checkOut: now, checkOutLocation: currentLocation, checkOutPhoto: currentPhoto, status: 'completed' });
+            showAlert('✅ Checked OUT successfully!', 'success'); activeSessionId = null;
+            currentPhoto = null; currentLocation = null; document.getElementById('previewDiv').style.display = 'none'; document.getElementById('webcam').style.display = 'block'; startCamera(); document.getElementById('locationBox').innerHTML = '📍 Click "Get GPS" to capture location'; document.getElementById('locationBox').className = 'alert alert-warning';
+            await checkCurrentStatus(); await loadHistory();
+        } catch(error) { showAlert('Error: ' + error.message, 'error'); if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> RETRY CHECK OUT'; } }
+    };
+
+    async function loadHistory() {
+        try {
+            const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).orderBy('date', 'desc').limit(20).get();
+            if (snapshot.empty) { document.getElementById('historyList').innerHTML = '<div class="alert alert-info">No attendance records found</div>'; return; }
+            let html = `<div class="table-wrapper"><table class="data-table"><thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Location</th><th>Selfie</th></tr></thead><tbody>`;
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                const locationText = data.checkInLocation ? `${data.checkInLocation.lat?.toFixed(6)}, ${data.checkInLocation.lng?.toFixed(6)}` : '-';
+                html += `<tr><td style="white-space:nowrap;">${data.date}</td><td style="white-space:nowrap;">${data.checkIn ? new Date(data.checkIn).toLocaleTimeString() : '-'}</td><td style="white-space:nowrap;">${data.checkOut ? new Date(data.checkOut).toLocaleTimeString() : '-'}</td><td style="white-space:normal;"><code class="coord-code">${locationText}</code></td><td style="white-space:nowrap;">${data.checkInPhoto ? `<img src="${data.checkInPhoto}" class="photo-preview" onclick="window.open(this.src)">` : '-'}</td></tr>`;
+            }
+            html += `</tbody>}</div>`;
+            document.getElementById('historyList').innerHTML = html;
+        } catch(e) { document.getElementById('historyList').innerHTML = '<div class="alert alert-error">Error loading history</div>'; }
+    }
+
+    // ============ REPORTS PAGE - FIXED WITHOUT INDEX ============
+    async function loadReports() {
+        let companyFilterHtml = '';
+        if (currentUserRole === 'super_admin') {
+            const companies = await db.collection('companies').get();
+            let options = '<option value="">All Companies</option>';
+            companies.forEach(doc => { options += `<option value="${doc.id}">${doc.data().name}</option>`; });
+            companyFilterHtml = `<div class="filter-group"><label>Select Company</label><select id="companyFilter">${options}</select></div>`;
+        }
+        document.getElementById('page-reports').innerHTML = `
+            <div class="card">
+                <div class="card-header"><i class="fas fa-chart-bar"></i> Generate Reports</div>
+                <div class="report-filters">
+                    <div class="filter-group"><label>Start Date</label><input type="date" id="startDate"></div>
+                    <div class="filter-group"><label>End Date</label><input type="date" id="endDate"></div>
+                    ${companyFilterHtml}
+                    <div class="filter-buttons"><button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-search"></i> Generate</button><button class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button><button class="btn btn-danger" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> PDF</button></div>
+                </div>
+                <div id="reportResults"></div>
+            </div>
+        `;
+    }
+
+    window.generateReport = async function() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        if (!start || !end) { showAlert('Please select both start and end dates', 'error'); return; }
+        showAlert('Loading report...', 'info');
+        try {
+            // First get all attendance in date range
+            let query = db.collection('attendance').where('date', '>=', start).where('date', '<=', end);
+            const snapshot = await query.get();
+            let data = [];
+            snapshot.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+            
+            // Then filter by company in JavaScript (no index needed)
+            if (currentUserRole === 'super_admin') {
+                const companyFilter = document.getElementById('companyFilter')?.value;
+                if (companyFilter) {
+                    data = data.filter(record => record.companyId === companyFilter);
                 }
-            } catch(e) { console.error(e); }
-            
-            document.getElementById('page-dashboard').innerHTML = `
-                <div class="grid-4">
-                    <div class="stat-card"><div class="stat-number">${totalEmp || 0}</div><div class="stat-label">Employees</div></div>
-                    ${currentUserRole === 'super_admin' ? `<div class="stat-card"><div class="stat-number">${totalCompanies}</div><div class="stat-label">Companies</div></div>` : ''}
-                    <div class="stat-card"><div class="stat-number">${todayPresent}</div><div class="stat-label">Present Today</div></div>
-                </div>
-                <div class="card">
-                    <div class="card-header">Welcome, ${currentUserData?.name || 'User'}</div>
-                    <p><strong>Role:</strong> ${currentUserRole === 'super_admin' ? 'Super Administrator' : (currentUserRole === 'company_admin' ? 'Company Administrator' : 'Employee')}</p>
-                    <p><strong>Email:</strong> ${currentUser?.email}</p>
-                </div>
-            `;
-        }
-
-        // ============ COMPANIES (Super Admin Only) ============
-        async function loadCompanies() {
-            const snap = await db.collection('companies').get();
-            let html = `
-                <div class="card">
-                    <div class="card-header">🏢 Companies <button class="btn btn-primary btn-sm" onclick="addCompany()">+ Add Company</button></div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Name</th><th>Address</th><th>Phone</th><th>Company Admin</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody>
-            `;
-            
-            for (const doc of snap.docs) {
-                const c = doc.data();
-                const adminSnap = await db.collection('users').where('companyId', '==', doc.id).where('role', '==', 'company_admin').get();
-                const adminName = adminSnap.empty ? 'Not assigned' : adminSnap.docs[0].data().name;
-                
-                html += `
-                    <tr>
-                        <td><strong>${c.name}</strong></td>
-                        <td>${c.address || '-'}</td>
-                        <td>${c.phone || '-'}</td>
-                        <td>${adminName}</td>
-                        <td><button class="btn btn-warning btn-sm" onclick="editCompany('${doc.id}','${c.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCompany('${doc.id}')">Delete</button></td>
-                    </tr>
-                `;
+            } else if (currentUserRole === 'company_admin') {
+                if (!currentUserCompany) { showAlert('No company assigned to your account. Contact Super Admin.', 'error'); return; }
+                data = data.filter(record => record.companyId === currentUserCompany);
+            } else if (currentUserRole !== 'super_admin') {
+                data = data.filter(record => record.userId === currentUser.uid);
             }
-            html += `</tbody></table></div></div>`;
-            document.getElementById('page-companies').innerHTML = html;
-        }
-        
-        window.addCompany = async () => {
-            const name = prompt('Company Name:'); if (!name) return;
-            const address = prompt('Address:'); 
-            const phone = prompt('Phone:');
-            await db.collection('companies').add({ name, address, phone, createdAt: new Date() });
-            showAlert('Company created!', 'success');
-            loadCompanies();
-        };
-        
-        window.editCompany = async (id, name) => { 
-            const newName = prompt('New name:', name); 
-            if (newName) await db.collection('companies').doc(id).update({ name: newName }); 
-            loadCompanies(); 
-        };
-        
-        window.deleteCompany = async (id) => { 
-            if (confirm('Delete this company?')) {
-                await db.collection('companies').doc(id).delete();
-                showAlert('Company deleted', 'success');
-                loadCompanies();
-            }
-        };
-
-        // ============ ALL USERS (Super Admin Only) ============
-        async function loadAllUsers() {
-            const companiesSnap = await db.collection('companies').get();
+            
+            window.reportData = data;
+            if (data.length === 0) { document.getElementById('reportResults').innerHTML = '<div class="alert alert-info">No records found for the selected date range.</div>'; return; }
+            
+            // Get company names
             const companies = {};
+            const companiesSnap = await db.collection('companies').get();
             companiesSnap.forEach(doc => { companies[doc.id] = doc.data().name; });
             
-            const usersSnap = await db.collection('users').get();
-            let html = `
-                <div class="card">
-                    <div class="card-header">👥 All Users <button class="btn btn-primary btn-sm" onclick="showAddUserModal()">+ Add User</button></div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Name</th><th>Email</th><th>Role</th><th>Company</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody>
-            `;
-            
-            for (const doc of usersSnap.docs) {
-                const u = doc.data();
-                const isSuperAdmin = u.email === SUPER_ADMIN_EMAIL;
-                
-                let roleBadge = '';
-                if (u.role === 'super_admin') roleBadge = '<span class="badge-admin">Super Admin</span>';
-                else if (u.role === 'company_admin') roleBadge = '<span class="badge-manager">Company Admin</span>';
-                else roleBadge = '<span class="badge-employee">Employee</span>';
-                
-                html += `
-                    <tr>
-                        <td>${u.name} ${isSuperAdmin ? '👑' : ''}</td>
-                        <td>${u.email}</td>
-                        <td>${roleBadge}</td>
-                        <td>${companies[u.companyId] || '-'}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" onclick="editUser('${u.uid}','${u.name}','${u.role}','${u.companyId}')">Edit</button>
-                            <button class="btn btn-info btn-sm" onclick="resetUserPwd('${u.email}')">Reset</button>
-                            ${!isSuperAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.uid}')">Delete</button>` : ''}
-                        </td>
-                    </tr>
-                `;
+            let html = `<h3 style="margin:15px 0;">📊 ${data.length} Record(s) Found</h3><div class="table-wrapper"><table class="data-table"><thead><tr><th>Employee</th><th>Company</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Latitude</th><th>Longitude</th><th>Selfie</th></tr></thead><tbody>`;
+            for (const d of data) {
+                const checkInTime = d.checkIn ? new Date(d.checkIn).toLocaleTimeString() : '-';
+                const checkOutTime = d.checkOut ? new Date(d.checkOut).toLocaleTimeString() : '-';
+                const lat = d.checkInLocation?.lat ? d.checkInLocation.lat.toFixed(6) : '-';
+                const lng = d.checkInLocation?.lng ? d.checkInLocation.lng.toFixed(6) : '-';
+                const employeeName = d.userName || d.userEmail || 'Unknown';
+                const companyName = companies[d.companyId] || d.companyId || '-';
+                const photo = d.checkInPhoto || d.startPhoto;
+                html += `<tr><td style="white-space:normal;"><strong>${employeeName}</strong></td><td style="white-space:normal;">${companyName}</td><td style="white-space:nowrap;">${d.date}</td><td style="white-space:nowrap;">${checkInTime}</td><td style="white-space:nowrap;">${checkOutTime}</td><td style="white-space:normal;"><code class="coord-code">${lat}</code></td><td style="white-space:normal;"><code class="coord-code">${lng}</code></td><td style="white-space:nowrap;">${photo ? `<img src="${photo}" width="35" height="35" style="border-radius:50%;cursor:pointer;object-fit:cover;" onclick="window.open(this.src)">` : '-'}</td></tr>`;
             }
-            html += `</tbody></table></div></div>`;
-            document.getElementById('page-users').innerHTML = html;
+            html += `</tbody>}</div>`;
+            document.getElementById('reportResults').innerHTML = html;
+            showAlert(`Found ${data.length} records`, 'success');
+        } catch(error) { 
+            console.error('Report error:', error);
+            showAlert('Error generating report: ' + error.message, 'error'); 
         }
-        
-        function showAddUserModal() {
-            db.collection('companies').get().then(snap => {
-                let companyOptions = '<option value="">None (for employees)</option>';
-                snap.forEach(doc => {
-                    companyOptions += `<option value="${doc.id}">${doc.data().name}</option>`;
-                });
-                
-                const modalHtml = `
-                    <div id="addUserModal" class="modal-overlay">
-                        <div class="modal-content">
-                            <h3>Add New User</h3>
-                            <input type="text" id="newUserName" placeholder="Full Name">
-                            <input type="email" id="newUserEmail" placeholder="Email">
-                            <input type="password" id="newUserPassword" placeholder="Password (min 6 chars)">
-                            <select id="newUserRole">
-                                <option value="employee">Employee</option>
-                                <option value="company_admin">Company Admin</option>
-                            </select>
-                            <select id="newUserCompany">
-                                ${companyOptions}
-                            </select>
-                            <div class="modal-buttons">
-                                <button onclick="saveNewUser()" class="btn btn-primary">Create</button>
-                                <button onclick="closeAddUserModal()" class="btn btn-secondary" style="background:#6c757d;color:white;">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-            });
-        }
-        
-        window.closeAddUserModal = function() {
-            document.getElementById('addUserModal')?.remove();
-        };
-        
-        window.saveNewUser = async function() {
-            const name = document.getElementById('newUserName')?.value;
-            const email = document.getElementById('newUserEmail')?.value;
-            const password = document.getElementById('newUserPassword')?.value;
-            const role = document.getElementById('newUserRole')?.value;
-            const companyId = document.getElementById('newUserCompany')?.value;
-            
-            if (!name || !email || !password) {
-                showAlert('Please fill all fields', 'error');
-                return;
-            }
-            if (password.length < 6) {
-                showAlert('Password must be at least 6 characters', 'error');
-                return;
-            }
-            
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                await db.collection('users').add({
-                    uid: userCredential.user.uid,
-                    name: name,
-                    email: email,
-                    role: role,
-                    companyId: role === 'company_admin' ? companyId : '',
-                    createdAt: new Date()
-                });
-                showAlert(`User ${name} created successfully!`, 'success');
-                closeAddUserModal();
-                loadAllUsers();
-            } catch(error) {
-                showAlert('Error: ' + error.message, 'error');
-            }
-        };
-        
-        window.editUser = async (uid, name, role, companyId) => {
-            const newName = prompt('New name:', name); 
-            const newRole = prompt('New role (company_admin/employee):', role);
-            let newCompany = companyId;
-            
-            if (newRole === 'company_admin') {
-                const companies = await db.collection('companies').get();
-                if (!companies.empty) {
-                    const companyList = [];
-                    companies.forEach(doc => companyList.push({ id: doc.id, name: doc.data().name }));
-                    const companyNames = companyList.map(c => c.name).join('\n');
-                    const selectedCompany = prompt(`Select company:\n${companyNames}\n\nEnter Company Name:`);
-                    if (selectedCompany) {
-                        const found = companyList.find(c => c.name === selectedCompany);
-                        if (found) newCompany = found.id;
-                    }
-                }
-            } else {
-                newCompany = '';
-            }
-            
-            const snap = await db.collection('users').where('uid', '==', uid).get();
-            snap.forEach(async (doc) => { 
-                await db.collection('users').doc(doc.id).update({ name: newName, role: newRole, companyId: newCompany }); 
-            });
-            showAlert('User updated', 'success');
-            loadAllUsers();
-        };
-        
-        window.deleteUser = async (uid) => {
-            if (confirm('Delete this user?')) {
-                const snap = await db.collection('users').where('uid', '==', uid).get();
-                snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).delete(); });
-                showAlert('User deleted', 'success');
-                loadAllUsers();
-            }
-        };
-        
-        window.resetUserPwd = (email) => { 
-            auth.sendPasswordResetEmail(email); 
-            showAlert(`Reset email sent to ${email}`, 'success'); 
-        };
+    };
 
-        // ============ MY TEAM (Company Admin Only) ============
-        async function loadMyTeam() {
-            const usersSnap = await db.collection('users').where('companyId', '==', currentUserCompany).get();
-            let html = `
-                <div class="card">
-                    <div class="card-header">👥 My Team <button class="btn btn-primary btn-sm" onclick="addTeamMember()">+ Add Member</button></div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody>
-            `;
-            
-            for (const doc of usersSnap.docs) {
-                const u = doc.data();
-                if (u.uid !== currentUser?.uid) {
-                    const today = new Date().toISOString().split('T')[0];
-                    const attSnap = await db.collection('attendance').where('userId', '==', u.uid).where('date', '==', today).get();
-                    let status = 'Absent';
-                    let statusClass = 'badge-danger';
-                    attSnap.forEach(a => { if (a.data().checkIn) { status = 'Present'; statusClass = 'badge-success'; } });
-                    
-                    html += `
-                        <tr>
-                            <td>${u.name}</td>
-                            <td>${u.email}</td>
-                            <td>${u.role}</td>
-                            <td><span class="badge ${statusClass}">${status}</span></td>
-                            <td><button class="btn btn-warning btn-sm" onclick="editTeamMember('${u.uid}','${u.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeamMember('${u.uid}')">Delete</button></td>
-                        </tr>
-                    `;
-                }
-            }
-            html += `</tbody></table></div></div>`;
-            document.getElementById('page-myusers').innerHTML = html;
-        }
-        
-        window.addTeamMember = async () => {
-            const name = prompt('Name:'); 
-            const email = prompt('Email:'); 
-            const password = prompt('Password (min 6 chars):'); 
-            
-            if (name && email && password && password.length >= 6) {
-                try {
-                    const cred = await auth.createUserWithEmailAndPassword(email, password);
-                    await db.collection('users').add({ 
-                        uid: cred.user.uid, 
-                        name, 
-                        email, 
-                        role: 'employee', 
-                        companyId: currentUserCompany, 
-                        createdAt: new Date() 
-                    });
-                    showAlert(`Employee ${name} added!`, 'success');
-                    loadMyTeam();
-                    if (currentUserRole === 'super_admin') loadAllUsers();
-                } catch(e) { showAlert('Error: ' + e.message, 'error'); }
-            } else {
-                showAlert('Password must be at least 6 characters', 'error');
-            }
-        };
-        
-        window.editTeamMember = async (uid, name) => {
-            const newName = prompt('New name:', name);
-            const snap = await db.collection('users').where('uid', '==', uid).get();
-            snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).update({ name: newName }); });
-            showAlert('Employee updated', 'success');
-            loadMyTeam();
-        };
-        
-        window.deleteTeamMember = async (uid) => {
-            if (confirm('Remove this employee?')) {
-                const snap = await db.collection('users').where('uid', '==', uid).get();
-                snap.forEach(async (doc) => { await db.collection('users').doc(doc.id).delete(); });
-                showAlert('Employee removed', 'success');
-                loadMyTeam();
-            }
-        };
-
-        // ============ ATTENDANCE PAGE ============
-        async function loadAttendancePage() {
-            document.getElementById('page-attendance').innerHTML = `
-                <div class="card">
-                    <div class="card-header"><i class="fas fa-camera"></i> Mark Attendance</div>
-                    <div id="attStatus" class="alert alert-info">📌 Take selfie & capture GPS</div>
-                    <div class="webcam-box">
-                        <video id="webcam" autoplay playsinline style="width:100%;max-width:300px;"></video>
-                        <canvas id="canvas" style="display:none;"></canvas>
-                        <div id="previewDiv" style="display:none;"><img id="previewImg"><p style="margin-top:10px;color:#28a745;">✅ Selfie captured!</p></div>
-                    </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0;">
-                        <button class="btn btn-primary" onclick="startCamera()"><i class="fas fa-video"></i> Start Camera</button>
-                        <button class="btn btn-success" onclick="capturePhoto()"><i class="fas fa-camera"></i> Take Selfie</button>
-                        <button class="btn btn-warning" onclick="retakePhoto()"><i class="fas fa-redo"></i> Retake</button>
-                        <button class="btn btn-info" onclick="getGPSLocation()"><i class="fas fa-map-marker-alt"></i> Get GPS</button>
-                    </div>
-                    <div id="locationBox" class="alert alert-warning">📍 Click "Get GPS" to capture location</div>
-                    <div id="actionArea" style="text-align:center;margin-top:15px;"></div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><i class="fas fa-history"></i> History</div>
-                    <div id="historyList">Loading...</div>
-                </div>
-            `;
-            startCamera();
-            await checkCurrentStatus();
-            await loadHistory();
-        }
-        
-        async function checkCurrentStatus() {
-            const today = new Date().toISOString().split('T')[0];
-            const existing = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
-            
-            let activeSession = null;
-            existing.forEach(doc => {
-                const data = doc.data();
-                if (data.checkIn && !data.checkOut) {
-                    activeSession = { id: doc.id, ...data };
-                    activeSessionId = doc.id;
-                }
-            });
-            
-            const actionArea = document.getElementById('actionArea');
-            const statusDiv = document.getElementById('attStatus');
-            
-            if (activeSession) {
-                actionArea.innerHTML = `<button class="btn btn-danger btn-block" onclick="checkOut()" id="checkOutBtn"><i class="fas fa-sign-out-alt"></i> CHECK OUT</button>`;
-                statusDiv.innerHTML = `<div class="alert alert-info">✅ Checked in at ${new Date(activeSession.checkIn).toLocaleTimeString()}. Click CHECK OUT when leaving.</div>`;
-            } else {
-                actionArea.innerHTML = `<button class="btn btn-success btn-block" onclick="checkIn()" id="checkInBtn"><i class="fas fa-sign-in-alt"></i> CHECK IN</button>`;
-                statusDiv.innerHTML = `<div class="alert alert-warning">📌 Not checked in. Take selfie, get GPS, then click CHECK IN.</div>`;
-                activeSessionId = null;
-            }
-        }
-        
-        window.startCamera = async () => {
-            try {
-                if (stream) stream.getTracks().forEach(t => t.stop());
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('webcam').srcObject = stream;
-            } catch(e) { showAlert('Camera error: ' + e.message, 'error'); }
-        };
-        
-        window.capturePhoto = function() {
-            const video = document.getElementById('webcam');
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            currentPhoto = canvas.toDataURL('image/jpeg');
-            document.getElementById('previewDiv').style.display = 'block';
-            document.getElementById('previewImg').src = currentPhoto;
-            document.getElementById('webcam').style.display = 'none';
-            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-            showAlert('✅ Selfie captured! Now get GPS.', 'success');
-            checkReadyStatus();
-        };
-        
-        window.retakePhoto = function() {
-            currentPhoto = null;
-            document.getElementById('previewDiv').style.display = 'none';
-            document.getElementById('webcam').style.display = 'block';
-            startCamera();
-            checkReadyStatus();
-        };
-        
-        window.getGPSLocation = async function() {
-            try {
-                showAlert('Getting GPS...', 'info');
-                const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000 }));
-                currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                const mapsLink = `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lng}`;
-                document.getElementById('locationBox').innerHTML = `📍 GPS: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} ✅ <a href="${mapsLink}" target="_blank">View Map</a>`;
-                document.getElementById('locationBox').className = 'alert alert-success';
-                showAlert('✅ GPS captured!', 'success');
-                checkReadyStatus();
-            } catch(e) {
-                document.getElementById('locationBox').innerHTML = `⚠️ GPS Error: ${e.message}`;
-                document.getElementById('locationBox').className = 'alert alert-error';
-            }
-        };
-        
-        function checkReadyStatus() {
-            const checkInBtn = document.getElementById('checkInBtn');
-            if (checkInBtn) {
-                if (currentPhoto && currentLocation) {
-                    checkInBtn.disabled = false;
-                    checkInBtn.innerHTML = '<i class="fas fa-check-circle"></i> ✅ READY - CHECK IN';
-                } else {
-                    checkInBtn.disabled = true;
-                    if (!currentPhoto && !currentLocation) checkInBtn.innerHTML = '<i class="fas fa-camera"></i> Take Selfie & Get GPS';
-                    else if (!currentPhoto) checkInBtn.innerHTML = '<i class="fas fa-camera"></i> Take Selfie First';
-                    else if (!currentLocation) checkInBtn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Get GPS First';
-                }
-            }
-        }
-        
-        window.checkIn = async function() {
-            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
-            if (!currentLocation) { showAlert('Get GPS first!', 'error'); return; }
-            
-            const btn = document.getElementById('checkInBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const now = new Date().toISOString();
-                
-                const existing = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
-                let hasActive = false;
-                existing.forEach(doc => { if (doc.data().checkIn && !doc.data().checkOut) hasActive = true; });
-                
-                if (hasActive) {
-                    showAlert('You are already checked in today!', 'warning');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> CHECK IN';
-                    return;
-                }
-                
-                await db.collection('attendance').add({
-                    userId: currentUser.uid,
-                    userName: currentUserData?.name || currentUser.email,
-                    userEmail: currentUser.email,
-                    companyId: currentUserCompany || '',
-                    date: today,
-                    checkIn: now,
-                    checkInLocation: currentLocation,
-                    checkInPhoto: currentPhoto,
-                    status: 'checked_in'
-                });
-                
-                showAlert('✅ Checked IN successfully!', 'success');
-                
-                currentPhoto = null;
-                currentLocation = null;
-                document.getElementById('previewDiv').style.display = 'none';
-                document.getElementById('webcam').style.display = 'block';
-                startCamera();
-                document.getElementById('locationBox').innerHTML = '📍 Click "Get GPS" to capture location';
-                document.getElementById('locationBox').className = 'alert alert-warning';
-                
-                await checkCurrentStatus();
-                await loadHistory();
-                
-            } catch(error) {
-                showAlert('Error: ' + error.message, 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> RETRY CHECK IN';
-            }
-        };
-        
-        window.checkOut = async function() {
-            if (!currentPhoto) { showAlert('Take selfie first!', 'error'); return; }
-            if (!currentLocation) { showAlert('Get GPS first!', 'error'); return; }
-            
-            const btn = document.getElementById('checkOutBtn');
-            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
-            
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const now = new Date().toISOString();
-                
-                let sessionDoc = null;
-                if (activeSessionId) {
-                    const docRef = db.collection('attendance').doc(activeSessionId);
-                    const docSnap = await docRef.get();
-                    if (docSnap.exists && docSnap.data().checkIn && !docSnap.data().checkOut) {
-                        sessionDoc = { id: activeSessionId, ...docSnap.data() };
-                    }
-                }
-                
-                if (!sessionDoc) {
-                    const querySnapshot = await db.collection('attendance')
-                        .where('userId', '==', currentUser.uid)
-                        .where('date', '==', today)
-                        .where('checkOut', '==', null)
-                        .get();
-                    if (!querySnapshot.empty) {
-                        sessionDoc = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
-                        activeSessionId = sessionDoc.id;
-                    }
-                }
-                
-                if (!sessionDoc) {
-                    showAlert('No active check-in session found!', 'error');
-                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> CHECK OUT'; }
-                    return;
-                }
-                
-                await db.collection('attendance').doc(sessionDoc.id).update({
-                    checkOut: now,
-                    checkOutLocation: currentLocation,
-                    checkOutPhoto: currentPhoto,
-                    status: 'completed'
-                });
-                
-                showAlert('✅ Checked OUT successfully!', 'success');
-                activeSessionId = null;
-                
-                currentPhoto = null;
-                currentLocation = null;
-                document.getElementById('previewDiv').style.display = 'none';
-                document.getElementById('webcam').style.display = 'block';
-                startCamera();
-                document.getElementById('locationBox').innerHTML = '📍 Click "Get GPS" to capture location';
-                document.getElementById('locationBox').className = 'alert alert-warning';
-                
-                await checkCurrentStatus();
-                await loadHistory();
-                
-            } catch(error) {
-                showAlert('Error: ' + error.message, 'error');
-                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> RETRY CHECK OUT'; }
-            }
-        };
-        
-        async function loadHistory() {
-            try {
-                const snapshot = await db.collection('attendance').where('userId', '==', currentUser.uid).orderBy('date', 'desc').limit(20).get();
-                if (snapshot.empty) { 
-                    document.getElementById('historyList').innerHTML = '<div class="alert alert-info">No attendance records found</div>';
-                    return; 
-                }
-                
-                let html = `
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Location</th><th>Selfie</th></tr></thead>
-                            <tbody>
-                `;
-                for (const doc of snapshot.docs) {
-                    const data = doc.data();
-                    const locationText = data.checkInLocation ? `${data.checkInLocation.lat?.toFixed(6)}, ${data.checkInLocation.lng?.toFixed(6)}` : '-';
-                    html += `
-                        <tr>
-                            <td>${data.date}</td>
-                            <td>${data.checkIn ? new Date(data.checkIn).toLocaleTimeString() : '-'}</td>
-                            <td>${data.checkOut ? new Date(data.checkOut).toLocaleTimeString() : '-'}</td>
-                            <td><code class="coord-code">${locationText}</code></td>
-                            <td>${data.checkInPhoto ? `<img src="${data.checkInPhoto}" class="photo-preview" onclick="window.open(this.src)">` : '-'}</td>
-                        </tr>
-                    `;
-                }
-                html += `</tbody> licensierad</div>`;
-                document.getElementById('historyList').innerHTML = html;
-            } catch(e) { 
-                document.getElementById('historyList').innerHTML = '<div class="alert alert-error">Error loading history</div>';
-            }
-        }
-
-        // ============ REPORTS PAGE ============
-        async function loadReports() {
-            document.getElementById('page-reports').innerHTML = `
-                <div class="card">
-                    <div class="card-header"><i class="fas fa-chart-bar"></i> Generate Reports</div>
-                    <div class="report-filters">
-                        <div class="filter-group">
-                            <label>Start Date</label>
-                            <input type="date" id="startDate">
-                        </div>
-                        <div class="filter-group">
-                            <label>End Date</label>
-                            <input type="date" id="endDate">
-                        </div>
-                        <div class="filter-buttons">
-                            <button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-search"></i> Generate</button>
-                            <button class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
-                            <button class="btn btn-danger" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
-                        </div>
-                    </div>
-                    <div id="reportResults"></div>
-                </div>
-            `;
-        }
-        
-        window.generateReport = async function() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            if (!start || !end) { 
-                showAlert('Please select both start and end dates', 'error'); 
-                return; 
-            }
-            
-            showAlert('Loading report...', 'info');
-            
-            try {
-                let query = db.collection('attendance').where('date', '>=', start).where('date', '<=', end);
-                if (currentUserRole === 'company_admin') {
-                    query = query.where('companyId', '==', currentUserCompany);
-                } else if (currentUserRole !== 'super_admin') {
-                    query = query.where('userId', '==', currentUser.uid);
-                }
-                
-                const snapshot = await query.get();
-                const data = [];
-                snapshot.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
-                window.reportData = data;
-                
-                if (data.length === 0) {
-                    document.getElementById('reportResults').innerHTML = '<div class="alert alert-info">No records found for the selected date range.</div>';
-                    return;
-                }
-                
-                let html = `
-                    <h3 style="margin: 15px 0;">📊 ${data.length} Record(s) Found</h3>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Date</th>
-                                    <th>Check In</th>
-                                    <th>Check Out</th>
-                                    <th>Latitude</th>
-                                    <th>Longitude</th>
-                                    <th>Selfie</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                
-                for (const d of data) {
-                    const checkInTime = d.checkIn ? new Date(d.checkIn).toLocaleTimeString() : '-';
-                    const checkOutTime = d.checkOut ? new Date(d.checkOut).toLocaleTimeString() : '-';
-                    const lat = d.checkInLocation?.lat ? d.checkInLocation.lat.toFixed(6) : '-';
-                    const lng = d.checkInLocation?.lng ? d.checkInLocation.lng.toFixed(6) : '-';
-                    const employeeName = d.userName || d.userEmail || 'Unknown';
-                    const photo = d.checkInPhoto || d.startPhoto;
-                    
-                    html += `
-                        <tr>
-                            <td><strong>${employeeName}</strong></td>
-                            <td>${d.date}</td>
-                            <td>${checkInTime}</td>
-                            <td>${checkOutTime}</td>
-                            <td><code class="coord-code">${lat}</code></td>
-                            <td><code class="coord-code">${lng}</code></td>
-                            <td>${photo ? `<img src="${photo}" width="35" height="35" style="border-radius:50%;cursor:pointer;object-fit:cover;" onclick="window.open(this.src)">` : '-'}</td>
-                        </tr>
-                    `;
-                }
-                html += `</tbody>}</div>`;
-                document.getElementById('reportResults').innerHTML = html;
-                showAlert(`Found ${data.length} records`, 'success');
-            } catch(error) {
-                showAlert('Error generating report: ' + error.message, 'error');
-            }
-        };
-        
-        window.exportToExcel = function() {
-            if (!window.reportData?.length) { 
-                showAlert('Please generate a report first', 'error'); 
-                return; 
-            }
-            
-            const data = window.reportData.map(r => ({
-                'Employee Name': r.userName || r.userEmail,
-                'Date': r.date,
-                'Check In Time': r.checkIn ? new Date(r.checkIn).toLocaleString() : '-',
-                'Check Out Time': r.checkOut ? new Date(r.checkOut).toLocaleString() : '-',
-                'Latitude': r.checkInLocation?.lat?.toFixed(6) || '-',
-                'Longitude': r.checkInLocation?.lng?.toFixed(6) || '-',
-                'Google Maps Link': r.checkInLocation ? `https://www.google.com/maps?q=${r.checkInLocation.lat},${r.checkInLocation.lng}` : '-'
-            }));
-            
+    window.exportToExcel = function() {
+        if (!window.reportData?.length) { showAlert('Please generate a report first', 'error'); return; }
+        const companies = {}; 
+        db.collection('companies').get().then(async snap => { 
+            snap.forEach(doc => { companies[doc.id] = doc.data().name; });
+            const data = window.reportData.map(r => ({ 'Employee Name': r.userName || r.userEmail, 'Company': companies[r.companyId] || '-', 'Date': r.date, 'Check In Time': r.checkIn ? new Date(r.checkIn).toLocaleString() : '-', 'Check Out Time': r.checkOut ? new Date(r.checkOut).toLocaleString() : '-', 'Latitude': r.checkInLocation?.lat?.toFixed(6) || '-', 'Longitude': r.checkInLocation?.lng?.toFixed(6) || '-', 'Google Maps Link': r.checkInLocation ? `https://www.google.com/maps?q=${r.checkInLocation.lat},${r.checkInLocation.lng}` : '-' }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
             XLSX.writeFile(wb, `SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
             showAlert('Excel report exported successfully!', 'success');
-        };
-        
-        window.exportToPDF = function() {
-            if (!window.reportData?.length) { 
-                showAlert('Please generate a report first', 'error'); 
-                return; 
-            }
-            
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-                
-                doc.setFontSize(16);
-                doc.setTextColor(102, 126, 234);
-                doc.text('SPEEDEL EXPRESS - Attendance Report', 14, 15);
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
-                doc.text(`User: ${currentUser?.email}`, 14, 28);
-                
-                const tableData = window.reportData.map(r => [
-                    r.userName || r.userEmail,
-                    r.date,
-                    r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '-',
-                    r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '-',
-                    r.checkInLocation?.lat?.toFixed(6) || '-',
-                    r.checkInLocation?.lng?.toFixed(6) || '-'
-                ]);
-                
-                doc.autoTable({
-                    head: [['Employee', 'Date', 'Check In', 'Check Out', 'Latitude', 'Longitude']],
-                    body: tableData,
-                    startY: 35,
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [102, 126, 234], textColor: 255, fontSize: 9 },
-                    alternateRowStyles: { fillColor: [245, 245, 245] }
-                });
-                
-                doc.save(`SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-                showAlert('PDF report downloaded successfully!', 'success');
-            } catch(error) {
-                showAlert('Error generating PDF: ' + error.message, 'error');
-            }
-        };
-
-        window.logout = async () => {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            await auth.signOut();
-            renderLogin();
-        };
-
-        async function createSuperAdminInFirestore(user) {
-            const snap = await db.collection('users').where('uid', '==', user.uid).get();
-            if (snap.empty) {
-                await db.collection('users').add({
-                    uid: user.uid,
-                    name: "Super Admin",
-                    email: SUPER_ADMIN_EMAIL,
-                    role: "super_admin",
-                    companyId: "",
-                    createdAt: new Date()
-                });
-                console.log("Super Admin created in Firestore");
-            }
-            return true;
-        }
-
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                renderLogin();
-                return;
-            }
-            
-            renderLoading();
-            
-            if (user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
-                await createSuperAdminInFirestore(user);
-                currentUserRole = 'super_admin';
-                currentUserData = { name: 'Super Admin', role: 'super_admin', email: user.email };
-                currentUser = user;
-                renderMainLayout();
-                return;
-            }
-            
-            const snap = await db.collection('users').where('uid', '==', user.uid).get();
-            
-            if (!snap.empty) {
-                snap.forEach(doc => {
-                    currentUserData = doc.data();
-                    currentUserRole = currentUserData.role;
-                    currentUserCompany = currentUserData.companyId;
-                });
-                currentUser = user;
-                renderMainLayout();
-            } else {
-                showAlert('User not authorized. Contact Super Admin.', 'error');
-                setTimeout(() => logout(), 2000);
-            }
         });
-    </script>
+    };
+
+    window.exportToPDF = function() {
+        if (!window.reportData?.length) { showAlert('Please generate a report first', 'error'); return; }
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            doc.setFontSize(16); doc.setTextColor(102, 126, 234); doc.text('SPEEDEL EXPRESS - Attendance Report', 14, 15);
+            doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22); doc.text(`User: ${currentUser?.email}`, 14, 28);
+            const tableData = window.reportData.map(r => [r.userName || r.userEmail, r.date, r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '-', r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '-', r.checkInLocation?.lat?.toFixed(6) || '-', r.checkInLocation?.lng?.toFixed(6) || '-']);
+            doc.autoTable({ head: [['Employee', 'Date', 'Check In', 'Check Out', 'Latitude', 'Longitude']], body: tableData, startY: 35, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [102, 126, 234], textColor: 255, fontSize: 9 }, alternateRowStyles: { fillColor: [245, 245, 245] } });
+            doc.save(`SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+            showAlert('PDF report downloaded successfully!', 'success');
+        } catch(error) { showAlert('Error generating PDF: ' + error.message, 'error'); }
+    };
+
+    window.logout = async () => { if (stream) stream.getTracks().forEach(t => t.stop()); await auth.signOut(); renderLogin(); };
+
+    async function createSuperAdminInFirestore(user) {
+        const snap = await db.collection('users').where('uid', '==', user.uid).get();
+        if (snap.empty) { await db.collection('users').add({ uid: user.uid, name: "Super Admin", email: SUPER_ADMIN_EMAIL, role: "super_admin", companyId: "", createdAt: new Date() }); console.log("Super Admin created in Firestore"); }
+        return true;
+    }
+
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) { renderLogin(); return; }
+        renderLoading();
+        if (user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+            await createSuperAdminInFirestore(user);
+            currentUserRole = 'super_admin';
+            currentUserData = { name: 'Super Admin', role: 'super_admin', email: user.email };
+            currentUser = user;
+            renderMainLayout();
+            return;
+        }
+        const snap = await db.collection('users').where('uid', '==', user.uid).get();
+        if (!snap.empty) {
+            snap.forEach(doc => { currentUserData = doc.data(); currentUserRole = currentUserData.role; currentUserCompany = currentUserData.companyId; });
+            currentUser = user;
+            renderMainLayout();
+        } else {
+            showAlert('User not authorized. Contact Super Admin.', 'error');
+            setTimeout(() => logout(), 2000);
+        }
+    });
+</script>
 </body>
 </html>
