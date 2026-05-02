@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>SPEEDEL EXPRESS - Live Driver Tracking</title>
+    <title>SPEEDEL EXPRESS - Attendance System</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Leaflet CSS for Maps -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -64,38 +61,6 @@
         .data-table tr:last-child td { border-bottom: none; }
         .data-table tr:hover { background: #f5f5f5; }
 
-        /* Map Styles */
-        #trackingMap {
-            height: 400px;
-            width: 100%;
-            border-radius: 15px;
-            margin-top: 15px;
-        }
-        
-        .driver-marker {
-            background: #28a745;
-            border-radius: 50%;
-            width: 12px;
-            height: 12px;
-            border: 2px solid white;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-        
-        .online-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            background: #28a745;
-            color: white;
-        }
-        
-        .offline-badge {
-            background: #dc3545;
-            color: white;
-        }
-
         .report-filters { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; }
         .filter-group { flex: 1; min-width: 150px; }
         .filter-group label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600; color: #555; }
@@ -131,9 +96,6 @@
         .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
         .modal-buttons button { flex: 1; }
 
-        .toast-message { position: fixed; bottom: 30px; left: 20px; right: 20px; background: #333; color: white; text-align: center; padding: 12px; border-radius: 10px; z-index: 10000; font-size: 14px; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
-
         @media (max-width: 768px) {
             .btn { width: 100%; justify-content: center; margin: 5px 0; }
             .card { padding: 15px; }
@@ -143,7 +105,6 @@
             .filter-buttons { flex-direction: column; }
             .filter-buttons .btn { width: 100%; }
             .data-table th, .data-table td { padding: 8px 10px; font-size: 11px; }
-            #trackingMap { height: 300px; }
         }
     </style>
 </head>
@@ -177,9 +138,6 @@
     let stream = null;
     let currentLocation = null;
     let activeSessionId = null;
-    let locationInterval = null;
-    let trackingMap = null;
-    let driverMarkers = {};
 
     const SUPER_ADMIN_EMAIL = "Harishspeedel@gmail.com";
     let isDarkMode = false;
@@ -192,14 +150,6 @@
         alert.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
         container.appendChild(alert);
         setTimeout(() => alert.remove(), 4000);
-    }
-
-    function showToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'toast-message';
-        toast.innerHTML = `<i class="fas fa-download"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
     }
 
     function toggleTheme() {
@@ -218,9 +168,6 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`)?.classList.add('active');
         closeSidebar();
-        if (page === 'tracking') {
-            loadTrackingPage();
-        }
     }
 
     // ============ LOGIN PAGE ============
@@ -230,7 +177,7 @@
                 <div class="card" style="max-width:400px;width:100%;">
                     <div style="text-align:center;margin-bottom:25px;">
                         <h2 style="color:#667eea;">SPEEDEL EXPRESS</h2>
-                        <p style="color:#666;">Live Driver Tracking & Attendance</p>
+                        <p style="color:#666;">Attendance System</p>
                     </div>
                     <form id="loginForm">
                         <input type="email" id="email" placeholder="Email" required>
@@ -254,60 +201,15 @@
         document.getElementById('app').innerHTML = `<div style="min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><div class="card" style="text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:40px;color:#667eea;"></i><p style="margin-top:15px;">Loading dashboard...</p></div></div>`;
     }
 
-    // ============ START LIVE LOCATION TRACKING (For Drivers) ============
-    function startLiveLocationTracking() {
-        if (locationInterval) clearInterval(locationInterval);
-        
-        // Update location every 10 seconds when checked in
-        locationInterval = setInterval(async () => {
-            if (activeSessionId && navigator.geolocation) {
-                try {
-                    const pos = await new Promise((res, rej) => 
-                        navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 })
-                    );
-                    const liveLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, timestamp: new Date().toISOString() };
-                    
-                    // Update driver's live location in Firestore
-                    await db.collection('liveLocations').doc(currentUser.uid).set({
-                        driverId: currentUser.uid,
-                        driverName: currentUserData?.name || currentUser.email,
-                        companyId: currentUserCompany || '',
-                        location: liveLocation,
-                        status: 'active',
-                        lastUpdate: new Date().toISOString()
-                    });
-                } catch(e) { console.log("Location update failed:", e.message); }
-            } else if (!activeSessionId && locationInterval) {
-                // If not checked in, clear interval
-                clearInterval(locationInterval);
-                locationInterval = null;
-            }
-        }, 10000);
-    }
-
-    function stopLiveLocationTracking() {
-        if (locationInterval) {
-            clearInterval(locationInterval);
-            locationInterval = null;
-        }
-        // Mark driver as offline
-        if (currentUser?.uid) {
-            db.collection('liveLocations').doc(currentUser.uid).delete();
-        }
-    }
-
     // ============ MAIN LAYOUT ============
     function renderMainLayout() {
         const isSuperAdmin = currentUserRole === 'super_admin';
         const isCompanyAdmin = currentUserRole === 'company_admin';
-        const isDriver = currentUserRole === 'driver' || currentUserRole === 'employee';
-        
         const menuItems = `
-            <div class="sidebar-header"><h3>SPEEDEL Express</h3><small>${isSuperAdmin ? 'Super Admin' : (isCompanyAdmin ? 'Company Admin' : (isDriver ? 'Driver' : 'Employee'))}</small></div>
+            <div class="sidebar-header"><h3>SPEEDEL Express</h3><small>${isSuperAdmin ? 'Super Admin' : (isCompanyAdmin ? 'Company Admin' : 'Employee')}</small></div>
             <div class="sidebar-item" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Dashboard</div>
             ${isSuperAdmin ? `<div class="sidebar-item" onclick="navigateTo('companies')"><i class="fas fa-building"></i> Companies</div>` : ''}
             ${isSuperAdmin ? `<div class="sidebar-item" onclick="navigateTo('users')"><i class="fas fa-users"></i> All Users</div>` : ''}
-            ${(isSuperAdmin || isCompanyAdmin) ? `<div class="sidebar-item" onclick="navigateTo('tracking')"><i class="fas fa-map-marker-alt"></i> Live Tracking</div>` : ''}
             ${isCompanyAdmin ? `<div class="sidebar-item" onclick="navigateTo('myusers')"><i class="fas fa-users"></i> My Team</div>` : ''}
             <div class="sidebar-item" onclick="navigateTo('attendance')"><i class="fas fa-camera"></i> Attendance</div>
             <div class="sidebar-item" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</div>
@@ -320,8 +222,7 @@
             <div id="page-dashboard" class="page active"></div>
             <div id="page-companies" class="page"></div><div id="page-users" class="page"></div>
             <div id="page-myusers" class="page"></div><div id="page-attendance" class="page"></div>
-            <div id="page-reports" class="page"></div>
-            <div id="page-tracking" class="page"></div></div>
+            <div id="page-reports" class="page"></div></div>
         `;
         loadDashboard();
         if (isSuperAdmin) { loadCompanies(); loadAllUsers(); }
@@ -332,7 +233,7 @@
 
     // ============ DASHBOARD ============
     async function loadDashboard() {
-        let totalEmp = 0, totalCompanies = 0, todayPresent = 0, activeDrivers = 0, companyName = '';
+        let totalEmp = 0, totalCompanies = 0, todayPresent = 0, companyName = '';
         try {
             if (currentUserRole === 'super_admin') {
                 const users = await db.collection('users').get();
@@ -342,8 +243,6 @@
                 const today = new Date().toISOString().split('T')[0];
                 const attendance = await db.collection('attendance').where('date', '==', today).get();
                 todayPresent = attendance.size;
-                const liveDrivers = await db.collection('liveLocations').get();
-                activeDrivers = liveDrivers.size;
             } else if (currentUserRole === 'company_admin') {
                 if (currentUserCompany) {
                     const companyDoc = await db.collection('companies').doc(currentUserCompany).get();
@@ -354,157 +253,24 @@
                 const today = new Date().toISOString().split('T')[0];
                 const attendance = await db.collection('attendance').where('companyId', '==', currentUserCompany).where('date', '==', today).get();
                 todayPresent = attendance.size;
-                const liveDrivers = await db.collection('liveLocations').where('companyId', '==', currentUserCompany).get();
-                activeDrivers = liveDrivers.size;
             } else {
                 const today = new Date().toISOString().split('T')[0];
                 const attendance = await db.collection('attendance').where('userId', '==', currentUser.uid).where('date', '==', today).get();
                 todayPresent = attendance.size > 0 ? 1 : 0;
             }
         } catch(e) { console.error(e); }
-        
         document.getElementById('page-dashboard').innerHTML = `
             <div class="grid-4">
                 <div class="stat-card"><div class="stat-number">${totalEmp || 0}</div><div class="stat-label">Employees</div></div>
                 ${currentUserRole === 'super_admin' ? `<div class="stat-card"><div class="stat-number">${totalCompanies}</div><div class="stat-label">Companies</div></div>` : ''}
                 <div class="stat-card"><div class="stat-number">${todayPresent}</div><div class="stat-label">Present Today</div></div>
-                ${(currentUserRole === 'super_admin' || currentUserRole === 'company_admin') ? `<div class="stat-card"><div class="stat-number">${activeDrivers}</div><div class="stat-label">Live Drivers</div></div>` : ''}
             </div>
             <div class="card"><div class="card-header">Welcome, ${currentUserData?.name || 'User'}</div>
-            <p><strong>Role:</strong> ${currentUserRole === 'super_admin' ? 'Super Administrator' : (currentUserRole === 'company_admin' ? `Company Administrator - ${companyName}` : (currentUserRole === 'driver' ? 'Driver' : 'Employee'))}</p>
+            <p><strong>Role:</strong> ${currentUserRole === 'super_admin' ? 'Super Administrator' : (currentUserRole === 'company_admin' ? `Company Administrator - ${companyName}` : 'Employee')}</p>
             <p><strong>Email:</strong> ${currentUser?.email}</p>
-            ${(currentUserRole === 'super_admin' || currentUserRole === 'company_admin') ? `<p><strong>Live Tracking:</strong> <span class="badge-success" style="padding:4px 10px;">${activeDrivers} driver(s) active now</span></p>` : ''}</div>
+            ${currentUserRole === 'company_admin' && currentUserCompany ? `<p><strong>Company ID:</strong> ${currentUserCompany}</p>` : ''}</div>
         `;
     }
-
-    // ============ LIVE TRACKING PAGE ============
-    async function loadTrackingPage() {
-        document.getElementById('page-tracking').innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-map-marker-alt"></i> Live Driver Tracking
-                    <button class="btn btn-info btn-sm" onclick="refreshTracking()"><i class="fas fa-sync-alt"></i> Refresh</button>
-                </div>
-                <div id="trackingMap" style="height: 450px; width: 100%; border-radius: 15px;"></div>
-                <div id="onlineDriversList" class="table-wrapper" style="margin-top: 20px;">
-                    <h4>Online Drivers <i class="fas fa-circle" style="color:#28a745; font-size: 10px;"></i></h4>
-                    <div id="driversList">Loading...</div>
-                </div>
-            </div>
-        `;
-        
-        await initializeTrackingMap();
-        await loadOnlineDrivers();
-        
-        // Auto-refresh every 15 seconds
-        if (window.trackingInterval) clearInterval(window.trackingInterval);
-        window.trackingInterval = setInterval(() => {
-            if (document.getElementById('page-tracking').classList.contains('active')) {
-                loadOnlineDrivers();
-            }
-        }, 15000);
-    }
-    
-    async function initializeTrackingMap() {
-        // Default center (India)
-        const defaultCenter = [20.5937, 78.9629];
-        
-        if (trackingMap) {
-            trackingMap.remove();
-        }
-        
-        trackingMap = L.map('trackingMap').setView(defaultCenter, 5);
-        
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
-            subdomains: 'abcd',
-            maxZoom: 19,
-            minZoom: 3
-        }).addTo(trackingMap);
-    }
-    
-    async function loadOnlineDrivers() {
-        try {
-            let query = db.collection('liveLocations');
-            
-            if (currentUserRole === 'company_admin') {
-                query = query.where('companyId', '==', currentUserCompany);
-            }
-            
-            const snapshot = await query.get();
-            const drivers = [];
-            snapshot.forEach(doc => drivers.push({ id: doc.id, ...doc.data() }));
-            
-            if (drivers.length === 0) {
-                document.getElementById('driversList').innerHTML = '<div class="alert alert-info">No drivers currently online/active</div>';
-                if (trackingMap) {
-                    trackingMap.setView([20.5937, 78.9629], 5);
-                }
-                return;
-            }
-            
-            // Update markers on map
-            Object.keys(driverMarkers).forEach(key => {
-                if (trackingMap) trackingMap.removeLayer(driverMarkers[key]);
-            });
-            driverMarkers = {};
-            
-            let bounds = [];
-            let driversHtml = `<table class="data-table"><thead><tr><th>Driver Name</th><th>Last Update</th><th>Location</th><th>Status</th><th>Map</th></tr></thead><tbody>`;
-            
-            for (const driver of drivers) {
-                const loc = driver.location;
-                const lastUpdate = new Date(driver.lastUpdate);
-                const timeAgo = Math.floor((new Date() - lastUpdate) / 60000);
-                const isRecent = timeAgo < 5;
-                
-                driversHtml += `<tr>
-                    <td><strong>${driver.driverName || driver.driverId}</strong></td>
-                    <td>${timeAgo} min ago ${!isRecent ? '<span class="badge-danger" style="padding:2px 6px;">⚠️</span>' : ''}</td>
-                    <td><code class="coord-code">${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</code></td>
-                    <td><span class="online-badge">● Online</span></td>
-                    <td><a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}" target="_blank" class="btn btn-info btn-sm">View Map</a></td>
-                </tr>`;
-                
-                bounds.push([loc.lat, loc.lng]);
-                
-                // Add marker to map
-                const markerIcon = L.divIcon({
-                    className: 'driver-marker',
-                    html: `<div style="background:#28a745; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>`,
-                    iconSize: [12, 12],
-                    popupAnchor: [0, -6]
-                });
-                
-                const marker = L.marker([loc.lat, loc.lng], { icon: markerIcon }).addTo(trackingMap);
-                marker.bindPopup(`
-                    <b>${driver.driverName || driver.driverId}</b><br>
-                    Location: ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}<br>
-                    Last update: ${lastUpdate.toLocaleTimeString()}<br>
-                    <a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}" target="_blank">Open in Google Maps</a>
-                `);
-                driverMarkers[driver.id] = marker;
-            }
-            
-            driversHtml += `</tbody></table>`;
-            document.getElementById('driversList').innerHTML = driversHtml;
-            
-            // Fit map to show all drivers
-            if (bounds.length > 0 && trackingMap) {
-                const group = L.featureGroup(Object.values(driverMarkers));
-                trackingMap.fitBounds(group.getBounds().pad(0.1));
-            }
-            
-        } catch(e) {
-            console.error("Tracking error:", e);
-            document.getElementById('driversList').innerHTML = '<div class="alert alert-error">Error loading drivers</div>';
-        }
-    }
-    
-    window.refreshTracking = function() {
-        loadOnlineDrivers();
-        showAlert("Tracking refreshed!", "success");
-    };
 
     // ============ COMPANIES (Super Admin Only) ============
     async function loadCompanies() {
@@ -514,14 +280,9 @@
             const c = doc.data();
             const adminSnap = await db.collection('users').where('companyId', '==', doc.id).where('role', '==', 'company_admin').get();
             const adminName = adminSnap.empty ? 'Not assigned' : adminSnap.docs[0].data().name;
-            html += `<tr><td style="white-space:normal;"><strong>${c.name}</strong></td
-                     <td style="white-space:normal;">${c.address || '-'}</td
-                     <td style="white-space:normal;">${c.phone || '-'}</td
-                     <td style="white-space:normal;">${adminName}</td
-                     <td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editCompany('${doc.id}','${c.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCompany('${doc.id}')">Delete</button></td
-                </tr>`;
+            html += `<tr><td style="white-space:normal;"><strong>${c.name}</strong></td><td style="white-space:normal;">${c.address || '-'}</td><td style="white-space:normal;">${c.phone || '-'}</td><td style="white-space:normal;">${adminName}</td><td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editCompany('${doc.id}','${c.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCompany('${doc.id}')">Delete</button></td></tr>`;
         }
-        html += `</tbody>}</div></div>`;
+        html += `</tbody></table></div></div>`;
         document.getElementById('page-companies').innerHTML = html;
     }
 
@@ -540,14 +301,9 @@
             const u = doc.data();
             const isSuperAdmin = u.email === SUPER_ADMIN_EMAIL;
             let roleBadge = u.role === 'super_admin' ? '<span class="badge-admin">Super Admin</span>' : (u.role === 'company_admin' ? '<span class="badge-manager">Company Admin</span>' : '<span class="badge-employee">Employee</span>');
-            html += `<tr><td style="white-space:normal;">${u.name} ${isSuperAdmin ? '👑' : ''}</td
-                     <td style="white-space:normal;">${u.email}</td
-                     <td style="white-space:nowrap;">${roleBadge}</td
-                     <td style="white-space:normal;">${companies[u.companyId] || '-'}</td
-                     <td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editUser('${u.uid}','${u.name}','${u.role}','${u.companyId}')">Edit</button> <button class="btn btn-info btn-sm" onclick="resetUserPwd('${u.email}')">Reset</button> ${!isSuperAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.uid}')">Delete</button>` : ''}</td
-                </tr>`;
+            html += `<tr><td style="white-space:normal;">${u.name} ${isSuperAdmin ? '👑' : ''}</td><td style="white-space:normal;">${u.email}</td><td style="white-space:nowrap;">${roleBadge}</td><td style="white-space:normal;">${companies[u.companyId] || '-'}</td><td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editUser('${u.uid}','${u.name}','${u.role}','${u.companyId}')">Edit</button> <button class="btn btn-info btn-sm" onclick="resetUserPwd('${u.email}')">Reset</button> ${!isSuperAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.uid}')">Delete</button>` : ''}</td></tr>`;
         }
-        html += `</tbody>}</div></div>`;
+        html += `</tbody></table></div></div>`;
         document.getElementById('page-users').innerHTML = html;
     }
 
@@ -615,15 +371,10 @@
                 const attSnap = await db.collection('attendance').where('userId', '==', u.uid).where('date', '==', today).get();
                 let status = 'Absent', statusClass = 'badge-danger';
                 attSnap.forEach(a => { if (a.data().checkIn) { status = 'Present'; statusClass = 'badge-success'; } });
-                html += `<tr><td style="white-space:normal;">${u.name}</td
-                         <td style="white-space:normal;">${u.email}</td
-                         <td style="white-space:normal;">${u.role}</td
-                         <td style="white-space:nowrap;"><span class="badge ${statusClass}">${status}</span></td
-                         <td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editTeamMember('${u.uid}','${u.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeamMember('${u.uid}')">Delete</button></td
-                </tr>`;
+                html += `<tr><td style="white-space:normal;">${u.name}</td><td style="white-space:normal;">${u.email}</td><td style="white-space:normal;">${u.role}</td><td style="white-space:nowrap;"><span class="badge ${statusClass}">${status}</span></td><td style="white-space:nowrap;"><button class="btn btn-warning btn-sm" onclick="editTeamMember('${u.uid}','${u.name}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeamMember('${u.uid}')">Delete</button></td></tr>`;
             }
         }
-        html += `</tbody>}</div></div>`;
+        html += `</tbody></table></div></div>`;
         document.getElementById('page-myusers').innerHTML = html;
     }
 
@@ -669,13 +420,10 @@
         if (activeSession) {
             actionArea.innerHTML = `<button class="btn btn-danger btn-block" onclick="checkOut()" id="checkOutBtn"><i class="fas fa-sign-out-alt"></i> CHECK OUT</button>`;
             statusDiv.innerHTML = `<div class="alert alert-info">✅ Checked in at ${new Date(activeSession.checkIn).toLocaleTimeString()}. Click CHECK OUT when leaving.</div>`;
-            // Start live tracking when checked in
-            startLiveLocationTracking();
         } else {
             actionArea.innerHTML = `<button class="btn btn-success btn-block" onclick="checkIn()" id="checkInBtn"><i class="fas fa-sign-in-alt"></i> CHECK IN</button>`;
             statusDiv.innerHTML = `<div class="alert alert-warning">📌 Not checked in. Take selfie, get GPS, then click CHECK IN.</div>`;
             activeSessionId = null;
-            stopLiveLocationTracking();
         }
     }
 
@@ -699,7 +447,6 @@
             showAlert('✅ Checked IN successfully!', 'success');
             currentPhoto = null; currentLocation = null; document.getElementById('previewDiv').style.display = 'none'; document.getElementById('webcam').style.display = 'block'; startCamera(); document.getElementById('locationBox').innerHTML = '📍 Click "Get GPS" to capture location'; document.getElementById('locationBox').className = 'alert alert-warning';
             await checkCurrentStatus(); await loadHistory();
-            startLiveLocationTracking();
         } catch(error) { showAlert('Error: ' + error.message, 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> RETRY CHECK IN'; }
     };
 
@@ -717,7 +464,6 @@
             showAlert('✅ Checked OUT successfully!', 'success'); activeSessionId = null;
             currentPhoto = null; currentLocation = null; document.getElementById('previewDiv').style.display = 'none'; document.getElementById('webcam').style.display = 'block'; startCamera(); document.getElementById('locationBox').innerHTML = '📍 Click "Get GPS" to capture location'; document.getElementById('locationBox').className = 'alert alert-warning';
             await checkCurrentStatus(); await loadHistory();
-            stopLiveLocationTracking();
         } catch(error) { showAlert('Error: ' + error.message, 'error'); if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> RETRY CHECK OUT'; } }
     };
 
@@ -729,19 +475,14 @@
             for (const doc of snapshot.docs) {
                 const data = doc.data();
                 const locationText = data.checkInLocation ? `${data.checkInLocation.lat?.toFixed(6)}, ${data.checkInLocation.lng?.toFixed(6)}` : '-';
-                html += `<tr><td style="white-space:nowrap;">${data.date}</td
-                         <td style="white-space:nowrap;">${data.checkIn ? new Date(data.checkIn).toLocaleTimeString() : '-'}</td
-                         <td style="white-space:nowrap;">${data.checkOut ? new Date(data.checkOut).toLocaleTimeString() : '-'}</td
-                         <td style="white-space:normal;"><code class="coord-code">${locationText}</code></td
-                         <td style="white-space:nowrap;">${data.checkInPhoto ? `<img src="${data.checkInPhoto}" class="photo-preview" onclick="window.open(this.src)">` : '-'}</td
-                </tr>`;
+                html += `<tr><td style="white-space:nowrap;">${data.date}</td><td style="white-space:nowrap;">${data.checkIn ? new Date(data.checkIn).toLocaleTimeString() : '-'}</td><td style="white-space:nowrap;">${data.checkOut ? new Date(data.checkOut).toLocaleTimeString() : '-'}</td><td style="white-space:normal;"><code class="coord-code">${locationText}</code></td><td style="white-space:nowrap;">${data.checkInPhoto ? `<img src="${data.checkInPhoto}" class="photo-preview" onclick="window.open(this.src)">` : '-'}</td></tr>`;
             }
             html += `</tbody>}</div>`;
             document.getElementById('historyList').innerHTML = html;
         } catch(e) { document.getElementById('historyList').innerHTML = '<div class="alert alert-error">Error loading history</div>'; }
     }
 
-    // ============ REPORTS PAGE ============
+    // ============ REPORTS PAGE - FIXED WITHOUT INDEX ============
     async function loadReports() {
         let companyFilterHtml = '';
         if (currentUserRole === 'super_admin') {
@@ -770,24 +511,29 @@
         if (!start || !end) { showAlert('Please select both start and end dates', 'error'); return; }
         showAlert('Loading report...', 'info');
         try {
+            // First get all attendance in date range
             let query = db.collection('attendance').where('date', '>=', start).where('date', '<=', end);
             const snapshot = await query.get();
             let data = [];
             snapshot.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
             
+            // Then filter by company in JavaScript (no index needed)
             if (currentUserRole === 'super_admin') {
                 const companyFilter = document.getElementById('companyFilter')?.value;
-                if (companyFilter) { data = data.filter(record => record.companyId === companyFilter); }
+                if (companyFilter) {
+                    data = data.filter(record => record.companyId === companyFilter);
+                }
             } else if (currentUserRole === 'company_admin') {
-                if (!currentUserCompany) { showAlert('No company assigned.', 'error'); return; }
+                if (!currentUserCompany) { showAlert('No company assigned to your account. Contact Super Admin.', 'error'); return; }
                 data = data.filter(record => record.companyId === currentUserCompany);
             } else if (currentUserRole !== 'super_admin') {
                 data = data.filter(record => record.userId === currentUser.uid);
             }
             
             window.reportData = data;
-            if (data.length === 0) { document.getElementById('reportResults').innerHTML = '<div class="alert alert-info">No records found.</div>'; return; }
+            if (data.length === 0) { document.getElementById('reportResults').innerHTML = '<div class="alert alert-info">No records found for the selected date range.</div>'; return; }
             
+            // Get company names
             const companies = {};
             const companiesSnap = await db.collection('companies').get();
             companiesSnap.forEach(doc => { companies[doc.id] = doc.data().name; });
@@ -801,53 +547,50 @@
                 const employeeName = d.userName || d.userEmail || 'Unknown';
                 const companyName = companies[d.companyId] || d.companyId || '-';
                 const photo = d.checkInPhoto || d.startPhoto;
-                html += `<td><td style="white-space:normal;"><strong>${employeeName}</strong></td
-                         <td style="white-space:normal;">${companyName}</td
-                         <td style="white-space:nowrap;">${d.date}</td
-                         <td style="white-space:nowrap;">${checkInTime}</td
-                         <td style="white-space:nowrap;">${checkOutTime}</td
-                         <td style="white-space:normal;"><code class="coord-code">${lat}</code></td
-                         <td style="white-space:normal;"><code class="coord-code">${lng}</code></td
-                         <td style="white-space:nowrap;">${photo ? `<img src="${photo}" width="35" style="border-radius:50%;cursor:pointer;" onclick="window.open(this.src)">` : '-'}</td
-                </tr>`;
+                html += `<tr><td style="white-space:normal;"><strong>${employeeName}</strong></td><td style="white-space:normal;">${companyName}</td><td style="white-space:nowrap;">${d.date}</td><td style="white-space:nowrap;">${checkInTime}</td><td style="white-space:nowrap;">${checkOutTime}</td><td style="white-space:normal;"><code class="coord-code">${lat}</code></td><td style="white-space:normal;"><code class="coord-code">${lng}</code></td><td style="white-space:nowrap;">${photo ? `<img src="${photo}" width="35" height="35" style="border-radius:50%;cursor:pointer;object-fit:cover;" onclick="window.open(this.src)">` : '-'}</td></tr>`;
             }
             html += `</tbody>}</div>`;
             document.getElementById('reportResults').innerHTML = html;
             showAlert(`Found ${data.length} records`, 'success');
-        } catch(error) { showAlert('Error: ' + error.message, 'error'); }
+        } catch(error) { 
+            console.error('Report error:', error);
+            showAlert('Error generating report: ' + error.message, 'error'); 
+        }
     };
 
     window.exportToExcel = function() {
-        if (!window.reportData?.length) { showAlert('Generate report first', 'error'); return; }
-        const data = window.reportData.map(r => ({ 'Employee Name': r.userName || r.userEmail, 'Date': r.date, 'Check In': r.checkIn ? new Date(r.checkIn).toLocaleString() : '-', 'Check Out': r.checkOut ? new Date(r.checkOut).toLocaleString() : '-', 'Latitude': r.checkInLocation?.lat?.toFixed(6) || '-', 'Longitude': r.checkInLocation?.lng?.toFixed(6) || '-' }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
-        XLSX.writeFile(wb, `SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showToast('✅ Excel report downloaded!');
-        showAlert('Excel exported!', 'success');
+        if (!window.reportData?.length) { showAlert('Please generate a report first', 'error'); return; }
+        const companies = {}; 
+        db.collection('companies').get().then(async snap => { 
+            snap.forEach(doc => { companies[doc.id] = doc.data().name; });
+            const data = window.reportData.map(r => ({ 'Employee Name': r.userName || r.userEmail, 'Company': companies[r.companyId] || '-', 'Date': r.date, 'Check In Time': r.checkIn ? new Date(r.checkIn).toLocaleString() : '-', 'Check Out Time': r.checkOut ? new Date(r.checkOut).toLocaleString() : '-', 'Latitude': r.checkInLocation?.lat?.toFixed(6) || '-', 'Longitude': r.checkInLocation?.lng?.toFixed(6) || '-', 'Google Maps Link': r.checkInLocation ? `https://www.google.com/maps?q=${r.checkInLocation.lat},${r.checkInLocation.lng}` : '-' }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
+            XLSX.writeFile(wb, `SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showAlert('Excel report exported successfully!', 'success');
+        });
     };
 
     window.exportToPDF = function() {
-        if (!window.reportData?.length) { showAlert('Generate report first', 'error'); return; }
+        if (!window.reportData?.length) { showAlert('Please generate a report first', 'error'); return; }
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-            doc.setFontSize(16); doc.setTextColor(102, 126, 234); doc.text('SPEEDEL EXPRESS - Report', 14, 15);
-            doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
-            const tableData = window.reportData.map(r => [r.userName || r.userEmail, r.date, r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '-', r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '-']);
-            doc.autoTable({ head: [['Employee', 'Date', 'Check In', 'Check Out']], body: tableData, startY: 35, styles: { fontSize: 8 }, headStyles: { fillColor: [102, 126, 234] } });
+            doc.setFontSize(16); doc.setTextColor(102, 126, 234); doc.text('SPEEDEL EXPRESS - Attendance Report', 14, 15);
+            doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22); doc.text(`User: ${currentUser?.email}`, 14, 28);
+            const tableData = window.reportData.map(r => [r.userName || r.userEmail, r.date, r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '-', r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '-', r.checkInLocation?.lat?.toFixed(6) || '-', r.checkInLocation?.lng?.toFixed(6) || '-']);
+            doc.autoTable({ head: [['Employee', 'Date', 'Check In', 'Check Out', 'Latitude', 'Longitude']], body: tableData, startY: 35, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [102, 126, 234], textColor: 255, fontSize: 9 }, alternateRowStyles: { fillColor: [245, 245, 245] } });
             doc.save(`SPEEDEL_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-            showToast('✅ PDF report downloaded!');
-            showAlert('PDF exported!', 'success');
-        } catch(error) { showAlert('PDF Error: ' + error.message, 'error'); }
+            showAlert('PDF report downloaded successfully!', 'success');
+        } catch(error) { showAlert('Error generating PDF: ' + error.message, 'error'); }
     };
 
-    window.logout = async () => { stopLiveLocationTracking(); if (stream) stream.getTracks().forEach(t => t.stop()); await auth.signOut(); renderLogin(); };
+    window.logout = async () => { if (stream) stream.getTracks().forEach(t => t.stop()); await auth.signOut(); renderLogin(); };
 
     async function createSuperAdminInFirestore(user) {
         const snap = await db.collection('users').where('uid', '==', user.uid).get();
-        if (snap.empty) { await db.collection('users').add({ uid: user.uid, name: "Super Admin", email: SUPER_ADMIN_EMAIL, role: "super_admin", companyId: "", createdAt: new Date() }); }
+        if (snap.empty) { await db.collection('users').add({ uid: user.uid, name: "Super Admin", email: SUPER_ADMIN_EMAIL, role: "super_admin", companyId: "", createdAt: new Date() }); console.log("Super Admin created in Firestore"); }
         return true;
     }
 
@@ -868,7 +611,7 @@
             currentUser = user;
             renderMainLayout();
         } else {
-            showAlert('User not authorized.', 'error');
+            showAlert('User not authorized. Contact Super Admin.', 'error');
             setTimeout(() => logout(), 2000);
         }
     });
